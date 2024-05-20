@@ -1,0 +1,6 @@
+---
+title: "An RCT"
+author: "Antonio Linero"
+date: "2024-05-20"
+output: html_document
+---
