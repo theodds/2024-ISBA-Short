@@ -16,6 +16,8 @@ library(SoftBart)
 meps <- readRDS("../Data/meps2011.rds")
 ```
 
+# Model Description
+
 We use a model of the form
 
 $$
@@ -43,6 +45,20 @@ $$
 
 with $f(x)$ modeled using a BART model. 
 
+# Some Causal Questions
+
+We are interested in answering the following high-level questions:
+
+1. Are there any sub-populations for which the effect of smoking on health seems
+   to be larger (smaller) than the overall effect? In particular, how does this
+   relate to age, socio-economic status, and race?
+2. What is the overall (average) effect of smoking on self-rated health?
+
+# Getting the Clever Covariate
+
+Because the following code takes a long time to run, I have it set up to cache
+the results of the computation so that it only needs to be run once.
+
 ```{r clever}
 if(file.exists("../cache/fitted_smoke.rds")) {
   fitted_smoke <- readRDS("fitted_smoke.rds")
@@ -56,13 +72,36 @@ if(file.exists("../cache/fitted_smoke.rds")) {
 }
 ```
 
+After fitting the model, we save the residual to the variable `smoke_res` in the
+MEPS dataset:
+
 ```{r robbins}
 meps <- mutate(smoke_res = smoke - colMeans(fitted_smoke$XXX))
 ```
 
+# Fitting the BCF
+
+Nexty, we fit the Bayesian causal forest. We once again cache the result
+to avoid repeating computations on re-runs.
+
 ```{r}
-fitted_bcf <- vc_softbart_regression(phealth ~ age + bmi + edu + income + povlev + region + sex + marital + race + seatbelt, linear_var_name = "smoke")
+if(file.exists("../cache/fitted_bcf.rds")) {
+  fitted_bcf <- readRDS("../cache/fitted_bcf.rds")
+} else {
+  set.seed(20948)
+  fitted_bcf <- vc_softbart_regression(phealth ~ age + bmi + edu + income + 
+                                         povlev + region + sex + marital + race + 
+                                         seatbelt, linear_var_name = "smoke_res")
+  saveRDS(fitted_bcf, "../cache/fitted_bcf.rds")
+}
+
 ```
+
+# The Overall Effect
+
+# Subgroup Discovery
+
+# The Effect of Age
 
 ```{r}
 head(meps)
