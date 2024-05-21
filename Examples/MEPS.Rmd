@@ -5,3 +5,65 @@ date: "2024-05-20"
 output: html_document
 ---
 
+This document illustrates the use of a Bayesian causal forest to estimate the
+causal effect of smoking on self-rated health (SRH) using data from the medical
+expenditure panel survey (MEPS). We begin by loading the data.
+
+```{r load, message=FALSE}
+library(tidyverse)
+library(SoftBart)
+
+meps <- readRDS("../Data/meps2011.rds")
+```
+
+We use a model of the form
+
+$$
+  Y_i = m(X_i) + \{A_i - \widehat e(X_i)\} \, \tau(X_i) + \epsilon_i
+$$
+
+where $\epsilon_i \sim \text{Normal}(0, \sigma^2)$, $A_i$ is the indicator for
+smoking, and $\widehat e(X_i)$ is an estimate of the propensity score. The
+treatment effect function is given by $\tau(x)$, and we consider a regression on
+the residual $A_i - \widehat e(X_i)$ to address regularization induced
+confounding. If $\widehat e(X_i) \approx e(X_i)$ then $m(X_i)$ can be
+interpreted as the marginal mean
+
+$$
+  m(x) \approx \mathbb E(Y_i \mid X_i = x)
+$$
+
+which is immediate from the fact that
+$\mathbb E(A_i \mid X_i = x) \approx \widehat e(x)$. Both $m(x)$ and $\tau(x)$
+are modeled with soft BART models, as is the propensity score:
+
+$$
+  e(x) = \Phi\left\{f(x)\right\}
+$$
+
+with $f(x)$ modeled using a BART model. 
+
+```{r clever}
+if(file.exists("../cache/fitted_smoke.rds")) {
+  fitted_smoke <- readRDS("fitted_smoke.rds")
+} else {
+  set.seed(120398)
+  fitted_smoke <- softbart_probit(factor(smoke) ~ age + bmi + edu + income + povlev + 
+                                    region + sex + marital + race + seatbelt, 
+                                  test_data = meps,
+                                  data = meps)  
+  saveRDS(fitted_smoke, "../cache/fitted_smoke.rds")
+}
+```
+
+```{r robbins}
+meps <- mutate(smoke_res = smoke - colMeans(fitted_smoke$XXX))
+```
+
+```{r}
+fitted_bcf <- vc_softbart_regression(phealth ~ age + bmi + edu + income + povlev + region + sex + marital + race + seatbelt, linear_var_name = "smoke")
+```
+
+```{r}
+head(meps)
+```
