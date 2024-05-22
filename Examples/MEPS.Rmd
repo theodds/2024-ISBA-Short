@@ -43,16 +43,16 @@ $$
   e(x) = \Phi\left\{f(x)\right\}
 $$
 
-with $f(x)$ modeled using a BART model. 
+with $f(x)$ modeled using a BART model.
 
 # Some Causal Questions
 
 We are interested in answering the following high-level questions:
 
-1. Are there any sub-populations for which the effect of smoking on health seems
-   to be larger (smaller) than the overall effect? In particular, how does this
-   relate to age, socio-economic status, and race?
-2. What is the overall (average) effect of smoking on self-rated health?
+1.  Are there any sub-populations for which the effect of smoking on health
+    seems to be larger (smaller) than the overall effect? In particular, how
+    does this relate to age, socio-economic status, and race?
+2.  What is the overall (average) effect of smoking on self-rated health?
 
 # Getting the Clever Covariate
 
@@ -61,7 +61,7 @@ the results of the computation so that it only needs to be run once.
 
 ```{r clever}
 if(file.exists("../cache/fitted_smoke.rds")) {
-  fitted_smoke <- readRDS("fitted_smoke.rds")
+  fitted_smoke <- readRDS("../cache/fitted_smoke.rds")
 } else {
   set.seed(120398)
   fitted_smoke <- softbart_probit(factor(smoke) ~ age + bmi + edu + income + povlev + 
@@ -76,13 +76,13 @@ After fitting the model, we save the residual to the variable `smoke_res` in the
 MEPS dataset:
 
 ```{r robbins}
-meps <- mutate(smoke_res = smoke - colMeans(fitted_smoke$XXX))
+meps <- mutate(meps, smoke_res = smoke - fitted_smoke$p_train_mean)
 ```
 
 # Fitting the BCF
 
-Nexty, we fit the Bayesian causal forest. We once again cache the result
-to avoid repeating computations on re-runs.
+Next, we fit the Bayesian causal forest. We once again cache the result to avoid
+repeating computations on re-runs.
 
 ```{r}
 if(file.exists("../cache/fitted_bcf.rds")) {
@@ -91,13 +91,36 @@ if(file.exists("../cache/fitted_bcf.rds")) {
   set.seed(20948)
   fitted_bcf <- vc_softbart_regression(phealth ~ age + bmi + edu + income + 
                                          povlev + region + sex + marital + race + 
-                                         seatbelt, linear_var_name = "smoke_res")
+                                         seatbelt, linear_var_name = "smoke_res",
+                                       data = meps, test_data = meps)
   saveRDS(fitted_bcf, "../cache/fitted_bcf.rds")
 }
-
 ```
 
 # The Overall Effect
+
+The overall effect of smoking can be assessed by computing the *average
+treatment effect*
+
+$$
+  \bar \tau = \mathbb E\{Y_i(1) - Y_i(0)\} = \int \tau(x) \, f_X(x) \ dx
+$$
+
+where $f_X(x)$ is the density of the covariates. To avoid specifying a
+parametric family for $f_X(x)$ we instead take it to be (a) discrete and (b)
+supported at each of the observed covariate values so that $f_X(x) = \omega_x$
+and
+
+$$
+  \bar \tau = \sum_{i = 1}^N \omega_{X_i} \, \tau(X_i).
+$$
+
+We then model the $\omega_x$'s using the *Bayesian bootstrap* so that the
+posterior distribution of the weights is given by
+
+$$
+  (\omega_{X_1}, \ldots, \omega_{X_N}) \sim \text{Dirichlet}(1, \ldots, 1).
+$$
 
 # Subgroup Discovery
 
