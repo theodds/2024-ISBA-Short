@@ -12,9 +12,21 @@ expenditure panel survey (MEPS). We begin by loading the data.
 ```{r load, message=FALSE}
 library(tidyverse)
 library(SoftBart)
+library(ggdist)
+library(patchwork)
+library(latex2exp)
+library(rpart)
+library(rpart.plot)
+theme_set(theme_bw())
 
 meps <- readRDS("../Data/meps2011.rds")
+head(meps)
 ```
+
+SRH (`phealth`) is measured on a Likert scale with five levels, and has been
+coded so that higher levels correspond to better health. In principle it is
+probably better to model `phealth` as ordinal, but for the sake of this example
+we will treat it as numeric.
 
 # Model Description
 
@@ -122,7 +134,100 @@ $$
   (\omega_{X_1}, \ldots, \omega_{X_N}) \sim \text{Dirichlet}(1, \ldots, 1).
 $$
 
+The following code gets the posterior distribution of $\bar \tau$ and visualizes
+it:
+
+```{r}
+get_tau_bar <- function(fit) {
+  num_iter <- nrow(fit$beta_train)
+  num_obs <- ncol(fit$beta_train)
+  omega <- MCMCpack::rdirichlet(n = num_iter, alpha = rep(1, num_obs))
+  out_df <- data.frame(iter = 1:num_iter, tau_bar = rowSums(omega * fit$beta_train))
+  return(out_df)
+}
+tau_bar_df <- get_tau_bar(fitted_bcf)
+
+p_1 <- ggplot(tau_bar_df, aes(x = iter, y = tau_bar)) + geom_line() + xlab("Iteration") + ylab(TeX("\\bar{\\tau}")) + theme_bw()
+p_2 <- ggplot(tau_bar_df, aes(x = tau_bar)) + stat_halfeye(.width = c(.90, .95, .99)) + ylab("Posterior Density") + xlab(TeX("\\bar{\\tau}"))
+
+p_1 + p_2
+```
+
+We find that, unsurprisingly, smoking is associated with worse health outcomes:
+on average, the causal effect of smoking is estimated to be a reduction in
+health of 0.275 units.
+
 # Subgroup Discovery
+
+Next, we probe the posterior to determine if there are any subgroups for whom
+the effect of smoking is relatively large. We first use a decision tree
+to find compelling subgroups:
+
+```{r}
+post_sum <- rpart(colMeans(fitted_bcf$beta_train) ~ age + bmi + edu + income + povlev + 
+                                    region + sex + marital + race + seatbelt,
+                  data = meps)
+rpart.plot(post_sum)
+```
+
+The most important indicators appear to be region and age, with (i) younger
+people tending to have smaller causal effects and (ii) the Northeast and
+South appearing to have larger/smaller effect. We first look at the causal
+effects by region.
+
+```{r}
+get_region_effects <- function(fit) {
+  regions <- unique(meps$region)
+  iters <- nrow(fit$beta_train)
+  out <- list()
+  for(region in regions) {
+    idx <- which(meps$region == region)
+    tau_hat_region <- rowMeans(fit$beta_train[,idx])
+    tau_bar <- rowMeans(fit$beta_train)
+    out[[region]] <- data.frame(iteration = iters, region = region, Delta = tau_hat_region - tau_bar)
+  }
+  return(do.call(rbind, out))
+}
+
+region_effects <- get_region_effects(fitted_bcf)
+ggplot(region_effects, aes(x = Delta, y = region, fill = region)) + 
+  stat_halfeye()
+```
+
+Overall, there does not seem to be strong evidence that the overall effect
+differs much across regions, and the ensemble turns out to only use region
+for around 50% of the iterations.
+
+# Sanity Check
+
+```{r}
+library(splines)
+meps$smoke_hat <- fitted_smoke$p_train_mean
+
+lm_check <- lm(phealth ~ smoke_res * (ns(age,5) + bmi + edu + income + povlev + 
+                                    region + sex + marital + race + seatbelt), 
+               data = meps)
+tau_hat_lm <- predict(lm_check, meps %>% mutate(smoke_res = 1 - fitted_smoke$p_train_mean)) - 
+  predict(lm_check, meps %>% mutate(smoke_res = 0 - fitted_smoke$p_test_mean))
+hist(tau_hat_lm)
+mean(tau_hat_lm)
+
+lm_check <- lm(phealth ~ smoke * (ns(age,5) + bmi + edu + income + povlev + 
+                                    region + sex + marital + race + seatbelt), 
+               data = meps)
+tau_hat_lm <- predict(lm_check, meps %>% mutate(smoke = 1)) - 
+  predict(lm_check, meps %>% mutate(smoke = 0))
+hist(tau_hat_lm)
+mean(tau_hat_lm)
+
+lm_check <- lm(phealth ~ (smoke_hat + smoke) * (ns(age,5) + bmi + edu + income + povlev + 
+                                    region + sex + marital + race + seatbelt), 
+               data = meps)
+tau_hat_lm <- predict(lm_check, meps %>% mutate(smoke = 1)) - 
+  predict(lm_check, meps %>% mutate(smoke = 0))
+hist(tau_hat_lm)
+mean(tau_hat_lm)
+```
 
 # The Effect of Age
 
