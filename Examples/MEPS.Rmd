@@ -76,10 +76,12 @@ if(file.exists("../cache/fitted_smoke.rds")) {
   fitted_smoke <- readRDS("../cache/fitted_smoke.rds")
 } else {
   set.seed(120398)
+  opts <- Opts(update_s = FALSE, num_burn = 2500, num_thin = 5, num_save = 1000)
   fitted_smoke <- softbart_probit(factor(smoke) ~ age + bmi + edu + income + povlev + 
                                     region + sex + marital + race + seatbelt, 
                                   test_data = meps,
-                                  data = meps)  
+                                  data = meps,
+                                  opts = opts)  
   saveRDS(fitted_smoke, "../cache/fitted_smoke.rds")
 }
 ```
@@ -101,10 +103,12 @@ if(file.exists("../cache/fitted_bcf.rds")) {
   fitted_bcf <- readRDS("../cache/fitted_bcf.rds")
 } else {
   set.seed(20948)
+  opts <- Opts(update_s = FALSE, num_burn = 2500, num_thin = 5, num_save = 1000)
   fitted_bcf <- vc_softbart_regression(phealth ~ age + bmi + edu + income + 
                                          povlev + region + sex + marital + race + 
                                          seatbelt, linear_var_name = "smoke_res",
-                                       data = meps, test_data = meps)
+                                       data = meps, test_data = meps,
+                                       opts = opts)
   saveRDS(fitted_bcf, "../cache/fitted_bcf.rds")
 }
 ```
@@ -227,6 +231,79 @@ tau_hat_lm <- predict(lm_check, meps %>% mutate(smoke = 1)) -
   predict(lm_check, meps %>% mutate(smoke = 0))
 hist(tau_hat_lm)
 mean(tau_hat_lm)
+```
+
+# Other Sanity
+
+```{r, eval = FALSE}
+library(bcf)
+y <- meps$phealth
+z <- meps$smoke
+x_control <- model.matrix(phealth ~ age + bmi + edu + income + 
+                                         povlev + region + sex + marital + race + 
+                                         seatbelt - 1, data = meps)
+pihat <- fitted_smoke$p_train_mean
+
+fitted_bcf_2 <- bcf(y = y, z = z, x_control = x_control, pihat = pihat, 
+                  n_chains = 1, n_threads = 1, nburn = 1000, nsim = 1000, 
+                  nthin = 1, update_interval = 10, no_output = TRUE,
+                  save_tree_directory = NULL)
+```
+
+```{r, eval = FALSE}
+get_tau_bar_2 <- function(fit) {
+  num_iter <- nrow(fit$tau)
+  num_obs <- ncol(fit$tau)
+  omega <- MCMCpack::rdirichlet(n = num_iter, alpha = rep(1, num_obs))
+  out_df <- data.frame(iter = 1:num_iter, tau_bar = rowSums(omega * fit$tau))
+  return(out_df)
+}
+tau_bar_df_2 <- get_tau_bar_2(fitted_bcf_2)
+
+p_11 <- ggplot(tau_bar_df_2, aes(x = iter, y = tau_bar)) + geom_line() + xlab("Iteration") + ylab(TeX("\\bar{\\tau}")) + theme_bw()
+p_21 <- ggplot(tau_bar_df_2, aes(x = tau_bar)) + stat_halfeye(.width = c(.90, .95, .99)) + ylab("Posterior Density") + xlab(TeX("\\bar{\\tau}"))
+
+p_11 + p_21
+
+get_region_effects_2 <- function(fit) {
+  regions <- unique(meps$region)
+  iters <- nrow(fit$tau)
+  out <- list()
+  for(region in regions) {
+    idx <- which(meps$region == region)
+    tau_hat_region <- rowMeans(fit$tau[,idx])
+    tau_bar <- rowMeans(fit$tau)
+    out[[region]] <- data.frame(iteration = iters, region = region, 
+                                Delta = tau_hat_region - tau_bar)
+  }
+  return(do.call(rbind, out))
+}
+
+region_effects_2 <- get_region_effects_2(fitted_bcf_2)
+ggplot(region_effects_2, aes(x = Delta, y = region, fill = region)) + 
+  stat_halfeye()
+
+rpart.plot(rpart(colMeans(fitted_bcf_2$tau) ~ age + bmi + edu + income + 
+                                         povlev + region + sex + marital + race + 
+                                         seatbelt, data = meps))
+
+get_race_effects_2 <- function(fit) {
+  regions <- unique(meps$race)
+  iters <- nrow(fit$tau)
+  out <- list()
+  for(region in regions) {
+    idx <- which(meps$race == region)
+    tau_hat_region <- rowMeans(fit$tau[,idx])
+    tau_bar <- rowMeans(fit$tau)
+    out[[region]] <- data.frame(iteration = iters, region = region, 
+                                Delta = tau_hat_region - tau_bar)
+  }
+  return(do.call(rbind, out))
+}
+
+race_effects_2 <- get_race_effects_2(fitted_bcf_2)
+ggplot(race_effects_2, aes(x = Delta, y = region, fill = region)) + 
+  stat_halfeye()
 ```
 
 # The Effect of Age
