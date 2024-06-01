@@ -236,6 +236,7 @@ mean(tau_hat_lm)
 # Other Sanity
 
 ```{r, eval = FALSE}
+set.seed(1230981)
 library(bcf)
 y <- meps$phealth
 z <- meps$smoke
@@ -304,6 +305,32 @@ get_race_effects_2 <- function(fit) {
 race_effects_2 <- get_race_effects_2(fitted_bcf_2)
 ggplot(race_effects_2, aes(x = Delta, y = region, fill = region)) + 
   stat_halfeye()
+```
+
+# Age Brackets
+
+```{r}
+age_brackets <- cut(meps$age, breaks = c(0, quantile(meps$age, seq(.1, 1, length = 20)), 120))
+get_age_effects <- function(fit) {
+  iters <- nrow(fit$tau)
+  out <- list()  
+  for(age in unique(age_brackets)) {
+    idx <- which(age_brackets == age)
+    tau_hat_age <- rowMeans(fit$tau[,idx])
+    tau_bar <- rowMeans(fit$tau)
+    out[[age]] <- data.frame(iteration = iters, 
+                             age = age, 
+                             Delta = tau_hat_age - tau_bar, 
+                             tau_hat_age = tau_hat_age)
+  }
+  return(do.call(rbind, out))
+}
+
+age_effects <- get_age_effects(fitted_bcf_2)
+
+ggplot(age_effects, aes(x = Delta, y = age, fill = age)) +
+  stat_halfeye()
+
 ```
 
 # The Effect of Age

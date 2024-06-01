@@ -52,3 +52,5 @@ rsconnect/
 Data/sleep.csv
 Data/h147.ssp
 Data/munge_meps_test.R
+
+.DS_Store

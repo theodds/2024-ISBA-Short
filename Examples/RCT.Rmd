@@ -5,3 +5,34 @@ date: "2024-05-20"
 output: html_document
 ---
 
+```{r load}
+library(SoftBart)
+library(tidyverse)
+
+aids <- read_csv("../Data/aids.csv")
+aids_subset <- aids %>% filter(trt %in% c(0,1)) %>% 
+  mutate(cd4_change = cd420 - cd40)
+```
+
+```{r}
+set.seed(992093)
+
+formula_aids <- cd4_change ~ symptom + age + wtkg + hemo + homo + drugs + 
+  karnof + oprior + z30 + zprior + preanti + race + gender + str2 + symptom
+
+my_fit <- vc_softbart_regression(
+  formula_aids,
+  linear_var_name = "trt",
+  data = aids_subset,
+  test_data = aids_subset,
+  num_tree = 50,
+  k = 1,
+  opts = Opts(
+    num_burn = 1000,
+    num_save = 1000,
+    num_thin = 5
+  )
+)
+```
+
+
