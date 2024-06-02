@@ -5,6 +5,14 @@ date: "2024-05-20"
 output: html_document
 ---
 
+In this document we look at data from a clinical trial designed to assess
+the efficacy of several different treatments for HIV/AIDS on survival time.
+The study contained 2139 patients that were randomly assigned in equal
+proportions to one of four treatment arms. To keep things simple, we will look
+just at two of the treatments, which were coded as `trt == 1` and `trt == 2`.
+
+First, we load the data:
+
 ```{r load}
 library(SoftBart)
 library(tidyverse)
@@ -15,6 +23,9 @@ aids <- read_csv("../Data/aids.csv")
 aids_subset <- aids %>% filter(trt %in% c(0,1)) %>% 
   mutate(cd4_change = cd420 - cd40)
 ```
+
+Because the trial was randomized, we do not have to worry about confounding
+between the treatment assignment and the XXX
 
 ```{r}
 set.seed(992093)
@@ -32,9 +43,14 @@ my_fit <- vc_softbart_regression(
   opts = Opts(
     num_burn = 1000,
     num_save = 1000,
-    num_thin = 5
+    num_thin = 5,
+    update_s = FALSE
   )
 )
+```
+
+```{r}
+plot()
 ```
 
 # Trying with a BCF
@@ -107,4 +123,11 @@ highly effective. What about the whole dataset?
 library(survival)
 coxfit <- coxph(Surv(time, label) ~ trt * (race + drugs + homo + gender), data = aids_subset)
 summary(coxfit)
+
+coxfit2 <- coxph(Surv(time, label) ~ factor(trt) * (race + drugs + homo + gender), data = aids)
+summary(coxfit2)
+step(coxfit2)
 ```
+
+Still doesn't really seem to support anything interesting going on vis-a-vis 
+demographics or whatnot.
