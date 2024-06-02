@@ -96,3 +96,15 @@ bclm <- lm(cd4_change ~ trt * race * drugs, data = aids_subset)
 summary(bclm)
 step(bclm) %>% summary()
 ```
+
+## What if we try CoxPH?
+
+Seems like not much evidence that there is anything interesting going on in
+terms of survival rates for the different results; treatment seems to be
+highly effective. What about the whole dataset?
+
+```{r}
+library(survival)
+coxfit <- coxph(Surv(time, label) ~ trt * (race + drugs + homo + gender), data = aids_subset)
+summary(coxfit)
+```
