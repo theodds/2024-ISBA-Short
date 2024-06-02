@@ -8,6 +8,8 @@ output: html_document
 ```{r load}
 library(SoftBart)
 library(tidyverse)
+library(rpart)
+library(rpart.plot)
 
 aids <- read_csv("../Data/aids.csv")
 aids_subset <- aids %>% filter(trt %in% c(0,1)) %>% 
@@ -23,8 +25,8 @@ formula_aids <- cd4_change ~ symptom + age + wtkg + hemo + homo + drugs +
 my_fit <- vc_softbart_regression(
   formula_aids,
   linear_var_name = "trt",
-  data = aids_subset,
-  test_data = aids_subset,
+  data = aids_subset %>% mutate(trt = trt - 0.5),
+  test_data = aids_subset %>% mutate(trt = trt - 0.5),
   num_tree = 50,
   k = 1,
   opts = Opts(
@@ -35,4 +37,62 @@ my_fit <- vc_softbart_regression(
 )
 ```
 
+# Trying with a BCF
 
+```{r}
+library(bcf) 
+
+set.seed(23832)
+
+fitbcf <- function() {
+  X <- model.matrix(~ symptom + age + wtkg + hemo + homo + drugs +  karnof + 
+                      oprior + z30 + zprior + preanti + race + gender + str2 + 
+                      symptom, 
+                    data = aids_subset)
+  trt <- aids_subset$trt
+  y <- aids_subset$cd4_change
+  
+  bcf_out <- bcf(y = y, z = trt, x_control = X, x_moderate = X, 
+                 pihat = rep(0.5, nrow(X)), nburn = 1000, nsim = 1000, 
+                 no_output = TRUE, log_file = NULL, n_chains  = 1)
+  return(bcf_out)
+}
+
+fitted_bcf <- fitbcf()
+```
+
+## Plotting
+
+```{r}
+plot(colMeans(fitted_bcf$yhat), aids_subset$cd4_change)
+abline(a=0,b=1)
+hist(rowMeans(fitted_bcf$tau))
+```
+
+## Output of BCF
+
+```{r}
+race_idx <- which(aids_subset$homo == 1 & aids_subset$race == 1 & aids_subset$drugs == 0)
+race_idx2 <- which(aids_subset$homo == 0 & aids_subset$race == 0)
+
+tau_race_1 <- rowMeans(fitted_bcf$tau[,race_idx])
+tau_race_0 <- rowMeans(fitted_bcf$tau[,race_idx2])
+
+hist(tau_race_1 - tau_race_0)
+```
+
+```{r}
+# tau_hat <- colMeans(my_fit$beta_train)
+tau_hat <- colMeans(fitted_bcf$tau)
+rpart.plot(rpart(tau_hat ~ symptom + age + wtkg + hemo + homo + drugs + 
+  karnof + oprior + z30 + zprior + preanti + race + gender + str2 + symptom, 
+  data = aids_subset))
+```
+
+## What if We Just Use a Linear Model?
+
+```{r}
+bclm <- lm(cd4_change ~ trt * race * drugs, data = aids_subset)
+summary(bclm)
+step(bclm) %>% summary()
+```
