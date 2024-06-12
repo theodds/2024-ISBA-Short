@@ -12,6 +12,7 @@ expenditure panel survey (MEPS). We begin by loading the data.
 ```{r load, message=FALSE}
 library(tidyverse)
 library(SoftBart)
+library(bcf)
 library(ggdist)
 library(patchwork)
 library(latex2exp)
@@ -96,19 +97,18 @@ meps <- mutate(meps, smoke_res = smoke - fitted_smoke$p_train_mean)
 # Fitting the BCF
 
 Next, we fit the Bayesian causal forest. We once again cache the result to avoid
-repeating computations on re-runs.
+repeating computations on re-runs. This time, however, we will use the `bcf`
+package on CRAN.
 
 ```{r}
 if(file.exists("../cache/fitted_bcf.rds")) {
   fitted_bcf <- readRDS("../cache/fitted_bcf.rds")
 } else {
   set.seed(20948)
-  opts <- Opts(update_s = FALSE, num_burn = 2500, num_thin = 5, num_save = 1000)
-  fitted_bcf <- vc_softbart_regression(phealth ~ age + bmi + edu + income + 
-                                         povlev + region + sex + marital + race + 
-                                         seatbelt, linear_var_name = "smoke_res",
-                                       data = meps, test_data = meps,
-                                       opts = opts)
+  fitted_bcf <- bcf(y = y, z = z, x_control = x_control, pihat = pihat, 
+                  n_chains = 1, n_threads = 1, nburn = 1000, nsim = 1000, 
+                  nthin = 1, update_interval = 10, no_output = TRUE,
+                  save_tree_directory = NULL)
   saveRDS(fitted_bcf, "../cache/fitted_bcf.rds")
 }
 ```
@@ -143,10 +143,10 @@ it:
 
 ```{r}
 get_tau_bar <- function(fit) {
-  num_iter <- nrow(fit$beta_train)
-  num_obs <- ncol(fit$beta_train)
+  num_iter <- nrow(fit$tau)
+  num_obs <- ncol(fit$tau)
   omega <- MCMCpack::rdirichlet(n = num_iter, alpha = rep(1, num_obs))
-  out_df <- data.frame(iter = 1:num_iter, tau_bar = rowSums(omega * fit$beta_train))
+  out_df <- data.frame(iter = 1:num_iter, tau_bar = rowSums(omega * fit$tau))
   return(out_df)
 }
 tau_bar_df <- get_tau_bar(fitted_bcf)
@@ -168,146 +168,48 @@ the effect of smoking is relatively large. We first use a decision tree
 to find compelling subgroups:
 
 ```{r}
-post_sum <- rpart(colMeans(fitted_bcf$beta_train) ~ age + bmi + edu + income + povlev + 
+post_sum <- rpart(colMeans(fitted_bcf$tau) ~ age + bmi + edu + income + povlev + 
                                     region + sex + marital + race + seatbelt,
                   data = meps)
 rpart.plot(post_sum)
 ```
 
-The most important indicators appear to be region and age, with (i) younger
-people tending to have smaller causal effects and (ii) the Northeast and
-South appearing to have larger/smaller effect. We first look at the causal
-effects by region.
+The most important predictor appears to be race, with education, age, and region
+also appearing in the subgroups. We will restrict attention to differences among
+races for this illustration.
 
 ```{r}
-get_region_effects <- function(fit) {
-  regions <- unique(meps$region)
-  iters <- nrow(fit$beta_train)
-  out <- list()
-  for(region in regions) {
-    idx <- which(meps$region == region)
-    tau_hat_region <- rowMeans(fit$beta_train[,idx])
-    tau_bar <- rowMeans(fit$beta_train)
-    out[[region]] <- data.frame(iteration = iters, region = region, Delta = tau_hat_region - tau_bar)
-  }
-  return(do.call(rbind, out))
-}
-
-region_effects <- get_region_effects(fitted_bcf)
-ggplot(region_effects, aes(x = Delta, y = region, fill = region)) + 
-  stat_halfeye()
-```
-
-Overall, there does not seem to be strong evidence that the overall effect
-differs much across regions, and the ensemble turns out to only use region
-for around 50% of the iterations.
-
-# Sanity Check
-
-```{r}
-library(splines)
-meps$smoke_hat <- fitted_smoke$p_train_mean
-
-lm_check <- lm(phealth ~ smoke_res * (ns(age,5) + bmi + edu + income + povlev + 
-                                    region + sex + marital + race + seatbelt), 
-               data = meps)
-tau_hat_lm <- predict(lm_check, meps %>% mutate(smoke_res = 1 - fitted_smoke$p_train_mean)) - 
-  predict(lm_check, meps %>% mutate(smoke_res = 0 - fitted_smoke$p_test_mean))
-hist(tau_hat_lm)
-mean(tau_hat_lm)
-
-lm_check <- lm(phealth ~ smoke * (ns(age,5) + bmi + edu + income + povlev + 
-                                    region + sex + marital + race + seatbelt), 
-               data = meps)
-tau_hat_lm <- predict(lm_check, meps %>% mutate(smoke = 1)) - 
-  predict(lm_check, meps %>% mutate(smoke = 0))
-hist(tau_hat_lm)
-mean(tau_hat_lm)
-
-lm_check <- lm(phealth ~ (smoke_hat + smoke) * (ns(age,5) + bmi + edu + income + povlev + 
-                                    region + sex + marital + race + seatbelt), 
-               data = meps)
-tau_hat_lm <- predict(lm_check, meps %>% mutate(smoke = 1)) - 
-  predict(lm_check, meps %>% mutate(smoke = 0))
-hist(tau_hat_lm)
-mean(tau_hat_lm)
-```
-
-# Other Sanity
-
-```{r, eval = FALSE}
-set.seed(1230981)
-library(bcf)
-y <- meps$phealth
-z <- meps$smoke
-x_control <- model.matrix(phealth ~ age + bmi + edu + income + 
-                                         povlev + region + sex + marital + race + 
-                                         seatbelt - 1, data = meps)
-pihat <- fitted_smoke$p_train_mean
-
-fitted_bcf_2 <- bcf(y = y, z = z, x_control = x_control, pihat = pihat, 
-                  n_chains = 1, n_threads = 1, nburn = 1000, nsim = 1000, 
-                  nthin = 1, update_interval = 10, no_output = TRUE,
-                  save_tree_directory = NULL)
-```
-
-```{r, eval = FALSE}
-get_tau_bar_2 <- function(fit) {
-  num_iter <- nrow(fit$tau)
-  num_obs <- ncol(fit$tau)
-  omega <- MCMCpack::rdirichlet(n = num_iter, alpha = rep(1, num_obs))
-  out_df <- data.frame(iter = 1:num_iter, tau_bar = rowSums(omega * fit$tau))
-  return(out_df)
-}
-tau_bar_df_2 <- get_tau_bar_2(fitted_bcf_2)
-
-p_11 <- ggplot(tau_bar_df_2, aes(x = iter, y = tau_bar)) + geom_line() + xlab("Iteration") + ylab(TeX("\\bar{\\tau}")) + theme_bw()
-p_21 <- ggplot(tau_bar_df_2, aes(x = tau_bar)) + stat_halfeye(.width = c(.90, .95, .99)) + ylab("Posterior Density") + xlab(TeX("\\bar{\\tau}"))
-
-p_11 + p_21
-
-get_region_effects_2 <- function(fit) {
-  regions <- unique(meps$region)
-  iters <- nrow(fit$tau)
-  out <- list()
-  for(region in regions) {
-    idx <- which(meps$region == region)
-    tau_hat_region <- rowMeans(fit$tau[,idx])
-    tau_bar <- rowMeans(fit$tau)
-    out[[region]] <- data.frame(iteration = iters, region = region, 
-                                Delta = tau_hat_region - tau_bar)
-  }
-  return(do.call(rbind, out))
-}
-
-region_effects_2 <- get_region_effects_2(fitted_bcf_2)
-ggplot(region_effects_2, aes(x = Delta, y = region, fill = region)) + 
-  stat_halfeye()
-
-rpart.plot(rpart(colMeans(fitted_bcf_2$tau) ~ age + bmi + edu + income + 
-                                         povlev + region + sex + marital + race + 
-                                         seatbelt, data = meps))
-
-get_race_effects_2 <- function(fit) {
+get_race_effects <- function(fit) {
   regions <- unique(meps$race)
   iters <- nrow(fit$tau)
   out <- list()
-  for(region in regions) {
-    idx <- which(meps$race == region)
-    tau_hat_region <- rowMeans(fit$tau[,idx])
+  for(race in regions) {
+    idx <- which(meps$race == race)
+    tau_hat_race <- rowMeans(fit$tau[,idx])
     tau_bar <- rowMeans(fit$tau)
-    out[[region]] <- data.frame(iteration = iters, region = region, 
-                                Delta = tau_hat_region - tau_bar)
+    out[[race]] <- data.frame(iteration = iters, race = race, Delta = tau_hat_race - tau_bar)
   }
   return(do.call(rbind, out))
 }
 
-race_effects_2 <- get_race_effects_2(fitted_bcf_2)
-ggplot(race_effects_2, aes(x = Delta, y = region, fill = region)) + 
+race_effects <- get_race_effects(fitted_bcf_2)
+ggplot(race_effects, aes(x = Delta, y = race, fill = race)) + 
   stat_halfeye()
 ```
 
-# Age Brackets
+Overall, there seems to evidence that (i) white individuals have more negative
+effects of smoking on self-rated health, while (ii) there is some evidence that
+the difference in SRH among black individuals who smoke and who do not is
+somewhat smaller than would be predicted by the average effect. There is some
+indication that other races also have report smaller dropoffs than average,
+but they overlap considerably with a $0$ difference from the average in their
+posteriors.
+
+# The Effect of Age
+
+The following plot shows how we can also look at the treatment effects in
+different age strata, as the effect of smoking might change depending on
+an individual's age.
 
 ```{r}
 age_brackets <- cut(meps$age, breaks = c(0, quantile(meps$age, seq(.1, 1, length = 20)), 120))
@@ -325,16 +227,14 @@ get_age_effects <- function(fit) {
   }
   return(do.call(rbind, out))
 }
-
-age_effects <- get_age_effects(fitted_bcf_2)
+age_effects <- get_age_effects(fitted_bcf)
 
 ggplot(age_effects, aes(x = Delta, y = age, fill = age)) +
-  stat_halfeye()
+  stat_halfeye() + coord_flip()
 
 ```
 
-# The Effect of Age
+Overahll, there seems to be some evidence that individuals are hit with larger
+health impacts when they are older, but there is also substantial overlap
+with $0$ at all ages.
 
-```{r}
-head(meps)
-```

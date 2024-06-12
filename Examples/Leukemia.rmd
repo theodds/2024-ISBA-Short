@@ -1,0 +1,224 @@
+---
+title: "Survival Models and The Leukemia Dataset"
+bibliography: references.bib
+---
+
+# Dataset
+
+In this document, we illustrate the use of the proportional hazards model applied with BART to survival analysis. The
+dataset we are interested is described in the `spBayesSurv` package as follows:
+
+> A dataset on the survival of acute myeloid leukemia in 1,043 patients, first
+> analyzed by Henderson et al. (2002). It is of interest to investigate possible
+> spatial variation in survival after accounting for known subject-specific
+> prognostic factors, which include age, sex, white blood cell count (wbc) at
+> diagnosis, and the Townsend score (tpi) for which higher values indicates less
+> affluent areas. Both exact residential locations of all patients and their
+> administrative districts (24 districts that make up the whole region) are
+> available.
+
+We model this data using both the proportional hazards (PH) and non-proportional
+hazards (NPH) versions of the survival model described in the paper. The PH
+variant of the model is given by
+
+$$
+  \lambda(t \mid x) = \lambda_0(t) \, e^{r(x)}
+$$
+
+where $\lambda(t \mid x)$ is the *hazard function*
+$\frac{d}{dt} - \log S(t \mid x) = \frac{d}{dt} - \log \Pr(T_i > t \mid X_i = x)$
+and $\lambda_0(t)$ is modeled using a piecewise-constant hazard function.
+
+First we load the required packages:
+
+```{r loadpacks, message=FALSE}
+library(loo)
+library(ggdist)
+library(spBayesSurv)
+library(mgcv)
+library(rpart)
+library(rpart.plot)
+library(possum)
+library(BART4RS)
+library(tidybayes)
+library(tidyverse)
+theme_set(theme_bw())
+SEED <- digest::digest2int("analyze leukemia")
+```
+
+
+```{r loaddata}
+data("LeukSurv")
+head(LeukSurv)
+```
+
+We use a slightly modified version of this dataset, with the covariates of interest scaled:
+
+```{r otherleuk}
+data("leuk_data")
+head(leuk_data)
+```
+
+We first set a seed so that our results can be replicated, then we use the `coxpe_bart` function in the `BART4RS` package to fit the model:
+
+```{r fitmodel, cache=TRUE}
+set.seed(SEED + 1)
+
+fitted_coxpe <-
+  BART4RS::coxpe_bart(
+    formula = Surv(event_time, status) ~ age + sex + wbc + tpi,
+    data = leuk_data,
+    num_burn = 2500,
+    num_save = 2500,
+    num_thin = 10
+  )
+```
+
+# Posterior Summarization
+
+Next, we use the `possum` package (with some additional, optional, code for improving the visualization) to compute the posterior projection of the fitted BART model for $r(x)$ onto an additive model. We also compute projections leaving one predictor out at a time to help assess which predictors are most relevant in forming prediction.
+
+```{r possumfits, cache = TRUE}
+
+r <- fitted_coxpe$r_train
+r_hat <- fitted_coxpe$r_train_hat
+
+possum_summary <-
+  possum::additive_summary(
+    r_hat ~ s(age) + factor(sex) + s(logwbc) + s(tpi),
+    fhatSamples = t(r),
+    fhat = r_hat,
+    df = LeukSurv %>% mutate(logwbc = log(1 + wbc))
+  )
+
+possum_summary_nosex <-
+  possum::additive_summary(
+    r_hat ~ s(age) + s(wbc) + s(tpi),
+    fhatSamples = t(r),
+    fhat = r_hat,
+    df = LeukSurv
+  )
+
+possum_summary_noage <-
+  possum::additive_summary(
+    r_hat ~ s(wbc) + factor(sex) + s(tpi),
+    fhatSamples = t(r),
+    fhat = r_hat,
+    df = LeukSurv
+  )
+
+possum_summary_notpi <-
+  possum::additive_summary(
+    r_hat ~ s(wbc) + factor(sex) + s(age),
+    fhatSamples = t(r),
+    fhat = r_hat,
+    df = LeukSurv
+  )
+
+possum_summary_nowbc <-
+  possum::additive_summary(
+    r_hat ~ s(tpi) + factor(sex) + s(age),
+    fhatSamples = t(r),
+    fhat = r_hat,
+    df = LeukSurv
+  )
+```
+
+The following function is a modification of the `additive_summary_plot` function in `possum` that makes slightly prettier pictures.
+
+```{r additivesummary}
+additive_summary_plot_2 <-  function (additive_summary,
+                                      ribbonFill = "grey80",
+                                      windsor = NA)
+{
+  temp <- additive_summary$gamDf %>%
+    mutate(term = case_when(
+      term == "age" ~ "Age",
+      term == "tpi" ~ "TPI",
+      term == "wbc" ~ "WBC",
+      TRUE           ~ term
+    ))
+  if (!is.na(windsor)) {
+    if (!("quant" %in% colnames(temp))) {
+      stop("Quantiles not supplied")
+    }
+    temp <- temp %>% filter(quant > windsor/2 & quant < 1 -
+                              windsor/2)
+    glimpse(temp)
+  }
+  temp %>% distinct() %>%
+    ggplot() + geom_hline(yintercept = 0) +
+    geom_ribbon(aes(x_j, ymin = fx_j_lo, ymax = fx_j_hi),
+                fill = ribbonFill, alpha = 0.5) +
+    geom_line(aes(x_j, fx_j_mean), col = "firebrick3") +
+    geom_rug(aes(x_j, fx_j_mean), sides = "b", alpha = 0.25) +
+    facet_wrap(~term, scale = "free") +
+    labs(x = ("term"), y = ("Partial effect"))
+}
+```
+
+We note print the summary. We do not visualize the posterior effect of `sex` in this case because it turns out not to be very relevant, as we will see when we look at the summary $R^2$'s for the models:
+
+```{r add_sum, fig.align='center', dev='tikz', fig.height=3}
+add_sum <- additive_summary_plot_2(possum_summary) + xlab("") + theme_bw()
+plot(add_sum)
+```
+
+Each of the three predictors examined here (age, white blood cell count, and Townsend index) have an increasing relationship with $r(x)$.
+
+Next, we compare the summary $R^2$ for each of the summary models; recall from @woody2020 that this is given by the quantity
+
+$$
+  R^2 = \frac{\sum_i \{r(X_i) - \widetilde r(X_i)\}}{\sum_I \{r(X_i) - \bar r\}^2}
+$$
+
+where $\widetilde r = \arg \min_{q \in \mathcal Q} \|r - q\|$ and $\bar r = \frac{1}{N} \sum_i r(X_i)$. This quantity represents the proportion of the variability in $r(x)$ that can be explained by the projection onto the simpler summary model $\mathcal Q$. Doing this, we obtain the following posterior distributions for the summary $R^2$:
+
+```{r rsqplt, fig.align='center', dev='tikz'}
+rsq_df <- data.frame(Rsq = c(possum_summary$summaryRsq,
+                             possum_summary_nosex$summaryRsq,
+                             possum_summary_noage$summaryRsq,
+                             possum_summary_notpi$summaryRsq,
+                             possum_summary_nowbc$summaryRsq),
+                     Model = rep(c("All",
+                                   "Without Sex",
+                                   "Without Age",
+                                   "Without TPI",
+                                   "Without WBC"),
+                                 each = 2500))
+
+p_rsq <- ggplot(rsq_df) +
+  geom_density(aes(x = Rsq, y = after_stat(density), fill = Model),
+                 color = 'white', alpha = 0.3) +
+  xlab("Summary $R^2$") +
+  ylab("Density") +
+  theme_bw()
+
+plot(p_rsq)
+
+```
+
+Lastly, we'll plot the baseline hazard function over time; we see that it is decreasing over time, with individuals having a very high risk near baseline and much lower risk if they survive sufficiently long.
+
+```{r hazplot, dev="tikz", fig.height=3, fig.width=7}
+g <- c(lag(fitted_coxpe$time_grid)[-c(1:2)], 20)
+adjusted_hazard <- fitted_coxpe$base_haz
+
+haz_df <- data.frame(haz_hat = colMeans(adjusted_hazard),
+                     steps = fitted_coxpe$time_grid[-1],
+                     widths = g,
+                     lower = apply(adjusted_hazard, 2, \(x) quantile(x, 0.025)),
+                     upper = apply(adjusted_hazard, 2, \(x) quantile(x, 00.975)))
+
+p_1 <- ggplot(haz_df, aes(x = steps, y = haz_hat)) + geom_step() +
+  geom_step(aes(y = lower), lty = 2) + geom_step(aes(y = upper), lty = 2) +
+  xlab("Time") + ylab("") + xlim(1, 14) + ylim(0, 1.15) + theme_bw()
+p_2 <- ggplot(haz_df, aes(x = steps, y = haz_hat)) + geom_step() +
+  geom_step(aes(y = lower), lty = 2) + geom_step(aes(y = upper), lty = 2) +
+  xlab("Time") + ylab("") + xlim(0, 1) + theme_bw()
+p_3 <- ggplot(haz_df, aes(x = steps, y = haz_hat)) + geom_step() +
+  geom_step(aes(y = lower), lty = 2) + geom_step(aes(y = upper), lty = 2) +
+  xlab("Time") + ylab("Hazard") + theme_bw()
+
+hazplot <- gridExtra::grid.arrange(p_3, p_2, p_1, nrow = 1)
+```

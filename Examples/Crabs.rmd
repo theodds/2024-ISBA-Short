@@ -1,0 +1,202 @@
+---
+title: "Bayesian Semiparametric Negative Binomial"
+bibliography: references.bib
+---
+
+# Dataset
+
+In this notebook we analyze the *crabs dataset*, which is an example in the
+textbook *Categorical Data Analysis* by Agresti. We first load the data:
+
+```{r}
+library(tidyverse)
+library(useful)
+library(possum)
+library(Batman)
+library(patchwork)
+
+crabs <- read_csv("https://raw.githubusercontent.com/theodds/SDS-348/master/crabs.csv")
+```
+
+Next, we use the `QNBBart` function to fit the model. Because `QNBBart` does not
+have a "nice" interface yet, we have to preprocess some of the data ourselves.
+The `QNBBart` function takes the following arguments:
+
+- `X`: the design matrix for the training data.
+- `Y`: the count outcome.
+- `X_test`: the design matrix for the test data.
+- `probs`: a sparse matrix defining the probabilities of creating decision rules
+  for each of the predictors; basically, this will tell `QNBBart` that the
+  categorical variables in the design matrix are associated to the same variable
+  (e.g., color consists of several discrete levels, and the design matrix
+  creates dummy variables for each level that need to be associated to each
+  other).
+- `num_trees`: the number of trees in the ensemble.
+- `scale_lambda`: the leaf node scale parameter, called $\sigma_\mu$ in the
+  slides.
+- `scale_lambda_0`: the prior scale for the offset (see the slides).
+- `update_s`: whether to do automatic relevance determination or not.
+- `num_burn`, `num_thin`, and `num_save`: number of iterations to run for the
+  chain, including the warmup phase, thinning interval, and number of
+  observations to save.
+
+Because we will want to look at the impact of `color` (averaged over the
+observational units), we take our test set to consist of four copies of the
+training data, but with the color variable changed from dark to light.
+
+```{r}
+formula_crab <- satell ~ color + spine + width + weight - 1
+X <- build.x(formula_crab, crabs, contrasts = FALSE)
+
+X_test <- X
+X_test[,1:4] <- 0
+X_dark <- X_test; X_dark[,1] <- 1
+X_darker <- X_test; X_darker[,2] <- 1
+X_light <- X_test; X_light[,3] <- 1
+X_medium <- X_test; X_medium[,4] <- 1
+X_test <- rbind(X_dark, X_darker, X_light, X_medium)
+
+X <- SoftBart::quantile_normalize_bart(X)
+y <- crabs$satell
+probs <- Matrix::Matrix(data = 0, nrow = ncol(X), ncol = 4)
+probs[,1] <- c(1, 1, 1, 1, 0, 0, 0, 0, 0) / 4
+probs[,2] <- c(0,0,0,0,1,1,1,0,0) / 3
+probs[8,3] <- 1
+probs[9,4] <- 1
+```
+
+An important step from the above code is normalizing all of the covariates to
+lie between 0 and 1; **this is necessary for the BART model to work for this
+function!** Next we fit the model:
+
+```{r}
+set.seed(1234)
+
+num_tree <- 50
+
+fitted_crabs <- QNBBart(
+  X = X, Y = y, X_test = X_test, probs = probs, num_trees = num_tree,
+  scale_lambda = 1 / sqrt(num_tree), scale_lambda_0 = 1,  update_s = FALSE,
+  num_burn = 5000, num_thin = 1, num_save = 5000
+)
+```
+
+## The Posterior of k
+
+The dispersion parameter $k$ can be used to determine if the Poisson model is
+a good approximation:
+
+```{r}
+params <- data.frame(k = fitted_crabs$k)
+ggplot(params, aes(x = k)) + geom_histogram(color = 'white') + theme_bw() +
+  xlab("k") + ylab("Frequency") +
+  ggtitle("Posterior of Overdispersion Parameter")
+```
+
+The posterior concentrates around $k = 1$, which corresponds to a Geometric,
+rather than Poisson, model.
+
+## Variable Counts
+
+Next, we quickly assess which variables are being used in the model.
+
+```{r}
+barplot(colMeans(fitted_crabs$counts),
+        names.arg = c("Color", "Spine", "Width", "Weight"))
+```
+
+There is not much difference in the variable importances according to the number
+of splits used for each variable (this is somewhat typical, and also why I tend
+not to like looking at the number of splits as a measure of variable
+importance).
+
+## Assessing the Importance of Size
+
+We use the `possum` package to gain insight into the importance of the
+individual variables, with the `additive_summary` and `additive_summary_plot`
+functions. We will focus on just the "size" variables (weight and width), as
+they are correlated with each other.
+
+```{r}
+crabs2 <- crabs %>% mutate(color = as.factor(color), spine = as.factor(spine),
+                           r = colMeans(fitted_crabs$lambda))
+
+full <- possum::additive_summary(r ~ factor(color) + factor(spine) + s(width) + s(weight),
+                                 fhatSamples = t(fitted_crabs$lambda),
+                                 df = crabs2)
+q_1 <- additive_summary_plot(full) + theme_bw()
+
+drop_weight <- possum::additive_summary(r ~ factor(color) + factor(spine) + s(width),
+                                        fhatSamples = t(fitted_crabs$lambda),
+                                        df = crabs2)
+
+drop_width <- possum::additive_summary(r ~ factor(color) + factor(spine) + s(weight),
+                         fhatSamples = t(fitted_crabs$lambda),
+                         df = crabs2)
+
+q_2 <- additive_summary_plot(drop_weight) + theme_bw()
+q_3 <- additive_summary_plot(drop_width) + theme_bw()
+
+drop_both_rsq <- sapply(1:nrow(fitted_crabs$lambda_test), \(i) {
+  df <- mutate(crabs, r = fitted_crabs$lambda[i,])
+  summary(lm(r ~ color * spine, data = df))[["r.squared"]]
+})
+
+q_4 <- qplot(drop_both_rsq) + theme_bw() +
+  xlab("Summary R-Squared, No Size Variables")
+
+q_1 / (q_2 + q_3) / q_4
+
+```
+
+The top row displays the GAM projections for the model with both width and
+weight in the model, while the second row shows the GAM projections including
+only width (left) and only weight (right). Practically speaking, you can
+probably get away with not including both of these variables, but we see that
+*at least one* of the variables are required. The Summary $R^2$ is given in the
+bottom plot, and shows that excluding both variables greatly decreases the
+quality of the model.
+
+## The Importance of Color
+
+Lastly, we assess the importance of color. To do this, we look at the mean
+effect, across all observations, of changing the color to a given level $c$,
+relative to the overall average. Specifically, we define
+
+$$
+  c_k = \frac{1}{N} \sum_i r(X_i; \text{color} = k)
+  \qquad \text{and} \qquad
+  d_k = c_k - \frac{1}{K} \sum_j c_j.
+$$
+
+```{r}
+rows_dark <- 1:ncol(fitted_crabs$lambda)
+rows_darker <- 1:ncol(fitted_crabs$lambda) + ncol(fitted_crabs$lambda)
+rows_light <- 1:ncol(fitted_crabs$lambda) + 2 * ncol(fitted_crabs$lambda)
+rows_medium <- 1:ncol(fitted_crabs$lambda) + 3 * ncol(fitted_crabs$lambda)
+
+get_contrasts <- function() {
+  x <- fitted_crabs$lambda_test
+  avg <- rowMeans(x[,rows_dark] + x[,rows_darker] + x[,rows_light] + x[,rows_medium])
+  avg <- avg / 4
+  iter <- 1:nrow(x)
+  out <-
+    data.frame(
+      iter = iter,
+      dark = x[, rows_dark] %>% rowMeans - avg,
+      darker = x[, rows_darker] %>% rowMeans - avg,
+      light = x[, rows_light] %>% rowMeans - avg,
+      medium = x[,rows_medium] %>% rowMeans - avg
+    )
+  return(out)
+}
+
+color_df <- get_contrasts()
+color_long <- pivot_longer(color_df, cols = c(dark, darker, light, medium),
+                           names_to = "color", values_to = "average")
+ggplot(color_long, aes(x = color, y = average)) + geom_boxplot() + theme_bw()
+
+```
+
+For the most part, color does not seem to have a large impact on the
+predictions.

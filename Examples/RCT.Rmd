@@ -5,6 +5,8 @@ date: "2024-05-20"
 output: html_document
 ---
 
+# Problem Setup
+
 In this document we look at data from a clinical trial designed to assess
 the efficacy of several different treatments for HIV/AIDS on survival time.
 The study contained 2139 patients that were randomly assigned in equal
@@ -18,14 +20,31 @@ library(SoftBart)
 library(tidyverse)
 library(rpart)
 library(rpart.plot)
+library(ggdist)
 
 aids <- read_csv("../Data/aids.csv")
 aids_subset <- aids %>% filter(trt %in% c(0,1)) %>% 
   mutate(cd4_change = cd420 - cd40)
 ```
 
+We take as our outcome the continuous measure of change in CD4 count from
+baseline; CD4 count is a commonly-used biomarker that tracks the progression
+of AIDS symptoms, and generally individuals with lower CD4 counts have a poorer
+prognosis. Below we give a boxplot of the change from baseline CD4 across the
+two treatments.
+
+```{r}
+ggplot(aids_subset, aes(x = factor(trt), y = cd4_change)) + geom_boxplot() + theme_bw()
+```
+
+We can see from this plot a fairly noticeable shift in CD4 counts between the
+treatment and control arm, with CD4 changes tending to be somewhat higher in
+the treatment arm.
+
 Because the trial was randomized, we do not have to worry about confounding
-between the treatment assignment and the XXX
+between the treatment assignment and the pretreatment variables. We will
+threfore just use the `vc_softbart_regression` function with a linear predictor
+equal to $A_i - 0.5$.
 
 ```{r}
 set.seed(992093)
@@ -49,85 +68,157 @@ my_fit <- vc_softbart_regression(
 )
 ```
 
-```{r}
-plot()
-```
+# The Overall Treatment Effect
 
-# Trying with a BCF
-
-```{r}
-library(bcf) 
-
-set.seed(23832)
-
-fitbcf <- function() {
-  X <- model.matrix(~ symptom + age + wtkg + hemo + homo + drugs +  karnof + 
-                      oprior + z30 + zprior + preanti + race + gender + str2 + 
-                      symptom, 
-                    data = aids_subset)
-  trt <- aids_subset$trt
-  y <- aids_subset$cd4_change
-  
-  bcf_out <- bcf(y = y, z = trt, x_control = X, x_moderate = X, 
-                 pihat = rep(0.5, nrow(X)), nburn = 1000, nsim = 1000, 
-                 no_output = TRUE, log_file = NULL, n_chains  = 1)
-  return(bcf_out)
-}
-
-fitted_bcf <- fitbcf()
-```
-
-## Plotting
+First we will use the model to estimate the overall treatment effect. This is
+mainly just a sanity check: because the trial is randomized, we could also just
+do a t-test for the difference. Below we give the average treatment effect:
 
 ```{r}
-plot(colMeans(fitted_bcf$yhat), aids_subset$cd4_change)
-abline(a=0,b=1)
-hist(rowMeans(fitted_bcf$tau))
+plotdf <- data.frame(iteration = 1:nrow(my_fit$beta_train), 
+                     ATE = rowMeans(my_fit$beta_train))
+ggplot(data = plotdf, aes(x = ATE)) + stat_halfeye() + theme_bw()
+plotdf %>% summarise(ate_hat = mean(ATE), 
+                     LCL = quantile(ATE, 0.025), 
+                     UCL = quantile(ATE, 0.975))
 ```
 
-## Output of BCF
+This is comperable with what we get from the t-test:
 
 ```{r}
-race_idx <- which(aids_subset$homo == 1 & aids_subset$race == 1 & aids_subset$drugs == 0)
-race_idx2 <- which(aids_subset$homo == 0 & aids_subset$race == 0)
-
-tau_race_1 <- rowMeans(fitted_bcf$tau[,race_idx])
-tau_race_0 <- rowMeans(fitted_bcf$tau[,race_idx2])
-
-hist(tau_race_1 - tau_race_0)
+t.test(cd4_change ~ trt, data = aids_subset) %>% tidy()
 ```
+
+# Treatment Effect Heterogeneity
+
+First, we investigate treatment effect heterogeneity using subgroup
+identification, more-or-less just to check whether there is much here worth
+examining. First we run virtual twins using the `rpart` and `rpart.plot`
+packages.
 
 ```{r}
-# tau_hat <- colMeans(my_fit$beta_train)
-tau_hat <- colMeans(fitted_bcf$tau)
-rpart.plot(rpart(tau_hat ~ symptom + age + wtkg + hemo + homo + drugs + 
-  karnof + oprior + z30 + zprior + preanti + race + gender + str2 + symptom, 
-  data = aids_subset))
+tau_samps <- my_fit$beta_train
+tau_hats <- colMeans(tau_samps)
+subgroup_rpart <- rpart(tau_hats ~ symptom + age + wtkg + hemo + homo + drugs + 
+  karnof + oprior + z30 + zprior + preanti + race + gender + str2 + symptom,
+  data = aids_subset)
+rpart.plot(subgroup_rpart)
 ```
 
-## What if We Just Use a Linear Model?
+We see that the tree produces remarkably aligned subgroups, focusing primarily
+on young-vs-old at the first split, sexual orientation at the second split,
+and race at the third split. Let's focus just on the first two splits:
 
 ```{r}
-bclm <- lm(cd4_change ~ trt * race * drugs, data = aids_subset)
-summary(bclm)
-step(bclm) %>% summary()
+g_11 <- with(aids_subset, which(age < 37 & homo == 1))
+g_10 <- with(aids_subset, which(age < 37 & homo == 0))
+g_01 <- with(aids_subset, which(age >= 37 & homo == 1))
+g_00 <- with(aids_subset, which(age >= 37 & homo == 0))
+
+tau_hat_11 <- rowMeans(my_fit$beta_train[,g_11])
+tau_hat_10 <- rowMeans(my_fit$beta_train[,g_10])
+tau_hat_01 <- rowMeans(my_fit$beta_train[,g_01])
+tau_hat_00 <- rowMeans(my_fit$beta_train[,g_00])
+tau_hat_all <- rowMeans(my_fit$beta_train)
+iteration <- 1:length(tau_hat_11)
+delta_hat_11 <- tau_hat_11 - tau_hat_all
+delta_hat_10 <- tau_hat_10 - tau_hat_all
+delta_hat_01 <- tau_hat_01 - tau_hat_all
+delta_hat_00 <- tau_hat_00 - tau_hat_all
+
+plot_df <-
+  data.frame(
+    tau_hat = c(tau_hat_11, tau_hat_10, tau_hat_01, tau_hat_00),
+    delta_hat = c(delta_hat_11, delta_hat_10, delta_hat_01, delta_hat_00),
+    iteration = rep(iteration, 4),
+    subgroup = rep(c("g11", "g10", "g01", "g00"), each = length(iteration))
+  )
+
+ggplot(plot_df, aes(x = tau_hat, y = subgroup)) + stat_halfeye()
+ggplot(plot_df, aes(x = delta_hat, y = subgroup)) + stat_halfeye() + 
+  theme_bw() + geom_vline(xintercept = 0)
 ```
 
-## What if we try CoxPH?
-
-Seems like not much evidence that there is anything interesting going on in
-terms of survival rates for the different results; treatment seems to be
-highly effective. What about the whole dataset?
+On the basis of this, we see that there is some marginal evidence that the
+treatment was, on average, less effective within the group of young homosexual
+individuals and more effective within the group of older heterosexual
+individuals. Further refining by race gives the following:
 
 ```{r}
-library(survival)
-coxfit <- coxph(Surv(time, label) ~ trt * (race + drugs + homo + gender), data = aids_subset)
-summary(coxfit)
+g_111 <- with(aids_subset, which(age < 37 & homo == 1 & race == 1))
+g_101 <- with(aids_subset, which(age < 37 & homo == 0 & race == 1))
+g_011 <- with(aids_subset, which(age >= 37 & homo == 1 & race == 1))
+g_001 <- with(aids_subset, which(age >= 37 & homo == 0 & race == 1))
+g_110 <- with(aids_subset, which(age < 37 & homo == 1 & race == 0))
+g_100 <- with(aids_subset, which(age < 37 & homo == 0 & race == 0))
+g_010 <- with(aids_subset, which(age >= 37 & homo == 1 & race == 0))
+g_000 <- with(aids_subset, which(age >= 37 & homo == 0 & race == 0))
 
-coxfit2 <- coxph(Surv(time, label) ~ factor(trt) * (race + drugs + homo + gender), data = aids)
-summary(coxfit2)
-step(coxfit2)
+tau_hat_111 <- rowMeans(my_fit$beta_train[,g_111])
+tau_hat_101 <- rowMeans(my_fit$beta_train[,g_101])
+tau_hat_011 <- rowMeans(my_fit$beta_train[,g_011])
+tau_hat_001 <- rowMeans(my_fit$beta_train[,g_001])
+tau_hat_110 <- rowMeans(my_fit$beta_train[,g_110])
+tau_hat_100 <- rowMeans(my_fit$beta_train[,g_100])
+tau_hat_010 <- rowMeans(my_fit$beta_train[,g_010])
+tau_hat_000 <- rowMeans(my_fit$beta_train[,g_000])
+
+tau_hat_all <- rowMeans(my_fit$beta_train)
+iteration <- 1:length(tau_hat_11)
+delta_hat_111 <- tau_hat_111 - tau_hat_all
+delta_hat_101 <- tau_hat_101 - tau_hat_all
+delta_hat_011 <- tau_hat_011 - tau_hat_all
+delta_hat_001 <- tau_hat_001 - tau_hat_all
+delta_hat_110 <- tau_hat_110 - tau_hat_all
+delta_hat_100 <- tau_hat_100 - tau_hat_all
+delta_hat_010 <- tau_hat_010 - tau_hat_all
+delta_hat_000 <- tau_hat_000 - tau_hat_all
+
+plot_df <-
+  data.frame(
+    tau_hat = c(tau_hat_111, tau_hat_101, tau_hat_011, tau_hat_001, 
+                tau_hat_110, tau_hat_100, tau_hat_010, tau_hat_000),
+    delta_hat = c(delta_hat_111, delta_hat_101, delta_hat_011, delta_hat_001, 
+                  delta_hat_110, delta_hat_100, delta_hat_010, delta_hat_000),
+    iteration = rep(iteration, 8),
+    subgroup = rep(c("g111", "g101", "g011", "g001", 
+                     "g110", "g100", "g010", "g000"), each = length(iteration))
+  )
+
+ggplot(plot_df, aes(x = tau_hat, y = subgroup)) + stat_halfeye()
+ggplot(plot_df, aes(x = delta_hat, y = subgroup)) + stat_halfeye() + 
+  theme_bw() + geom_vline(xintercept = 0)
 ```
 
-Still doesn't really seem to support anything interesting going on vis-a-vis 
-demographics or whatnot.
+Of course, how far down the tree we go should depend on (i) the sample size (as
+the subgroups get smaller, the intervals will be wider), (ii) the magnitude of
+the effects (larger effects will make the effects more statistically plausible),
+and (iii) how much we believe in the regularization provided by the prior (if we
+do not believe that the prior is properly calibrated, and are just hoping for
+Frequentsit valid inferences, then we are effectively just data dredging as we
+see to find "statistically significant" effects).
+
+Overall, I would conclude on the basis of this work that the some examination of
+the treatment effect across age/race/sexual orientation warrants further study,
+in particular in trying to identify a mechanism for any apparent effects, but
+the analysis does not provide firm evidence of large differences. The effects
+differences *are* somewhat large: for the coarsest subgroups we get differences
+on the scale of 25% of the main effect.
+
+For reference, this is the result of an ANOVA that looks specifically at these
+three factors:
+
+```{r}
+aids_subset$age_cut <- ifelse(aids_subset$age > 37, 1, 0)
+anova_lm <- lm(cd4_change ~ trt * (age_cut + race + homo), data = aids_subset)
+anova_add <- lm(cd4_change ~ age_cut + race + homo + trt, data = aids_subset)
+
+anova(anova_add, anova_lm)
+```
+
+The results of this analysis suggests a statistically significant interaction
+between the treatment and some combination of these three variables; the catch
+of course here as far as Frequentist-validity of these results is that we have
+effectively "used the data twice" in arriving at this conclusion, whereas in
+some sense the BART model uses the data "only once" in the move from the prior
+to the posterior.
