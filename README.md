@@ -11,13 +11,24 @@ package. For Tony's presentations, you will need the following.
 - `possum`, which performs posterior summarization, available here:
 - `BART4RS`, which has some functions for fitting the Cox proportional hazards
    model, available here:
-   
+- `bcf`, the Bayesian Causal Forests package that has been archived by CRAN at https://cran.r-project.org/src/contrib/Archive/bcf
+You can install it like so.
+
+R> library(remotes); install_url("https://cran.r-project.org/src/contrib/Archive/bcf/bcf\_1.3.1.tar.gz")
+
 For Rodney's presentations, you will need the following.
 - `BART3`, the development version of the BART package available at
 https://github.com/rsparapa/bnptools
-For example, you can install it like so.
+You can install it like so.
 
 R> library(remotes); install_github("rsparapa/bnptools/BART3")
+
+For Rob's presentation, you will want the following.
+- `mBART`, the development version of the Monotonic BART package available at
+https://github.com/remcc/mBART_shlib
+For example, you can install it like so.
+
+R> library(remotes); install_github("remcc/mBART_shlib/mBART")
 
 # Replication Materials
 
