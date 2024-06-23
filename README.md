@@ -3,7 +3,7 @@ This repository contains code for reproducing some of the examples from the
 
 # Required Packages
 
-Most of the R packages needed can be installed from CRAN. There are a couple
+Most of the R packages needed can be installed from CRAN. There are a few
 of exceptions, which need to be installed from GitHub using the `devtools`
 package. For Tony's presentations, you will need the following.
 
@@ -16,8 +16,8 @@ For Rodney's presentations, you will need the following.
 - `BART3`, the development version of the BART package available at
 https://github.com/rsparapa/bnptools
 For example, you can install it like so.
-R> library(remotes)
-R> install_github("rsparapa/bnptools/BART3")
+
+R> library(remotes); install_github("rsparapa/bnptools/BART3")
 
 # Replication Materials
 
