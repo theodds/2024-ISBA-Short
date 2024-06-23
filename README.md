@@ -21,6 +21,7 @@ For Rodney's presentations, you will need the following.
 https://github.com/rsparapa/bnptools
 - `hbart`, the development version of the Heteroskedastic BART
 package available in the same place.
+
 For example, you can install BART3 like so.
 
 R> library(remotes); install_github("rsparapa/bnptools/BART3")
