@@ -14,7 +14,7 @@ package. For Tony's presentations, you will need the following.
 - `bcf`, the Bayesian Causal Forests package that has been archived by CRAN at https://cran.r-project.org/src/contrib/Archive/bcf
 You can install it like so.
 
-R> library(remotes); install_url("https://cran.r-project.org/src/contrib/Archive/bcf/bcf\_1.3.1.tar.gz")
+R> library(remotes); install_url("https://cran.r-project.org/src/contrib/Archive/bcf/bcf_1.3.1.tar.gz")
 
 For Rodney's presentations, you will need the following.
 - `BART3`, the development version of the BART package available at
