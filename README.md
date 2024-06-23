@@ -5,7 +5,16 @@ This repository contains code for reproducing some of the examples from the
 
 Most of the R packages needed can be installed from CRAN. There are a few
 of exceptions, which need to be installed using the `devtools`
-package. For Tony's presentations, you will need the following.
+package.
+
+For Rob's presentation, you will want the following.
+- `mBART`, the development version of the Monotonic BART package available at
+https://github.com/remcc/mBART_shlib
+For example, you can install it like so.
+
+R> library(remotes); install_github("remcc/mBART_shlib/mBART")
+
+For Tony's presentations, you will need the following.
 
 - `Batman`, which contains miscellaneous BART functions, available here:
 - `possum`, which performs posterior summarization, available here:
@@ -26,16 +35,9 @@ For example, you can install BART3 like so.
 
 R> library(remotes); install_github("rsparapa/bnptools/BART3")
 
-For Rob's presentation, you will want the following.
-- `mBART`, the development version of the Monotonic BART package available at
-https://github.com/remcc/mBART_shlib
-For example, you can install it like so.
-
-R> library(remotes); install_github("remcc/mBART_shlib/mBART")
-
 # Replication Materials
 
-All replication amterials are in the `Examples/` directory. To use this
+All replication materials are in the `Examples/` directory. To use this
 repository, simply do the following.
 
 1. Clone the repository.
