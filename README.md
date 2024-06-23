@@ -3,15 +3,22 @@ This repository contains code for reproducing some of the examples from the
 
 # Required Packages
 
-R packages can be installed from CRAN for the most part. There are a couple
+Most of the R packages needed can be installed from CRAN. There are a couple
 of exceptions, which need to be installed from GitHub using the `devtools`
-package:
+package. For Tony's presentations, you will need the following.
 
 - `Batman`, which contains miscellaneous BART functions, available here:
 - `possum`, which performs posterior summarization, available here:
 - `BART4RS`, which has some functions for fitting the Cox proportional hazards
    model, available here:
    
+For Rodney's presentations, you will need the following.
+- `BART3`, the development version of the BART package available at
+https://github.com/rsparapa/bnptools
+For example, you can install it like so.
+R> library(remotes)
+R> install_github("rsparapa/bnptools/BART3")
+
 # Replication Materials
 
 All replication amterials are in the `Examples/` directory. To use this
