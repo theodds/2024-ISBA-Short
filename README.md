@@ -4,7 +4,7 @@ This repository contains code for reproducing some of the examples from the
 # Required Packages
 
 Most of the R packages needed can be installed from CRAN. There are a few
-of exceptions, which need to be installed from GitHub using the `devtools`
+of exceptions, which need to be installed using the `devtools`
 package. For Tony's presentations, you will need the following.
 
 - `Batman`, which contains miscellaneous BART functions, available here:
