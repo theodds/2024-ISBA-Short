@@ -19,7 +19,9 @@ R> library(remotes); install_url("https://cran.r-project.org/src/contrib/Archive
 For Rodney's presentations, you will need the following.
 - `BART3`, the development version of the BART package available at
 https://github.com/rsparapa/bnptools
-You can install it like so.
+- `hbart`, the development version of the Heteroskedastic BART
+package available in the same place.
+For example, you can install BART3 like so.
 
 R> library(remotes); install_github("rsparapa/bnptools/BART3")
 
