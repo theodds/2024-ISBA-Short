@@ -5,10 +5,10 @@ This repository contains code for reproducing some of the examples from the
 
 The canonical reference manuals for installing R packages can
 be found on CRAN at 
-https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Installing-packages
+<https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Installing-packages>.
 
-For the packages needed in this course, we provide useful additional tips at 
-https://github.com/theodds/2024-ISBA-Short/blob/master/Sessions/install.pdf
+For the packages needed in this course, we provide useful additional tips 
+in the `Sessions/` directory (<https://github.com/theodds/2024-ISBA-Short/blob/master/Sessions/install.pdf>)
 along with other BART computing advice such as multi-threading.
 
 Below you will find a brief overview of installation instructions.  But, if you 
@@ -27,7 +27,7 @@ reliable local mirror.  Here, I'm using a popular US choice.
 
 For Rob's presentation, you will want the following.
 - `mBART`, the development version of the Monotonic BART package available at
-https://github.com/remcc/mBART_shlib
+<https://github.com/remcc/mBART_shlib>.
 For example, you can install it like so.
 
 `R> library(remotes); install_github("remcc/mBART_shlib/mBART")`
@@ -38,14 +38,14 @@ For Tony's presentations, you will need the following.
 - `possum`, which performs posterior summarization, available here:
 - `BART4RS`, which has some functions for fitting the Cox proportional hazards
    model, available here:
-- `bcf`, the Bayesian Causal Forests package that has been archived by CRAN at https://cran.r-project.org/src/contrib/Archive/bcf
+- `bcf`, the Bayesian Causal Forests package that has been archived by CRAN at <https://cran.r-project.org/src/contrib/Archive/bcf>.
 You can install it like so.
 
 `R> library(remotes); install_url("https://cran.r-project.org/src/contrib/Archive/bcf/bcf_1.3.1.tar.gz")`
 
 For Rodney's presentations, you will need the following.
 - `BART3`, the development version of the BART package available at
-https://github.com/rsparapa/bnptools
+<https://github.com/rsparapa/bnptools>.
 - `hbart`, the development version of the Heteroskedastic BART
 package available in the same place.
 
