@@ -1,7 +1,17 @@
 This repository contains code for reproducing some of the examples from the
 2024 ISBA BART short course.
 
-# Required Packages
+# Required R Packages
+
+The canonical reference manuals for installing R packages can
+be found on CRAN at 
+https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Installing-packages
+
+For the packages needed in this course, we provide useful additional tips at 
+https://github.com/theodds/2024-ISBA-Short/blob/master/Sessions/install.pdf
+
+Below you will find a brief overview of installation instructions.  But, if you 
+encounter any problems, please consult the documentation and notes above.
 
 Most of the R packages needed can be installed from CRAN. There are a few
 of exceptions that need to be installed using the `devtools` package.
