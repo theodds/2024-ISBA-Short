@@ -9,6 +9,7 @@ https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Installing-package
 
 For the packages needed in this course, we provide useful additional tips at 
 https://github.com/theodds/2024-ISBA-Short/blob/master/Sessions/install.pdf
+along with other BART computing advice such as multi-threading.
 
 Below you will find a brief overview of installation instructions.  But, if you 
 encounter any problems, please consult the documentation and notes above.
