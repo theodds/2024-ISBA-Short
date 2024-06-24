@@ -4,8 +4,14 @@ This repository contains code for reproducing some of the examples from the
 # Required Packages
 
 Most of the R packages needed can be installed from CRAN. There are a few
-of exceptions, which need to be installed using the `devtools`
-package.
+of exceptions that need to be installed using the `devtools` package.
+To install the necessary dependencies from CRAN, you need to pick a
+local mirror.  Here, I'm using a midwestern choice.
+
+R> options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN")) \\
+R> install.packages("Rcpp", dependencies=TRUE) \\
+R> install.packages("remotes", dependencies=TRUE) \\
+R> install.packages("devtools", dependencies=TRUE) \\
 
 For Rob's presentation, you will want the following.
 - `mBART`, the development version of the Monotonic BART package available at
