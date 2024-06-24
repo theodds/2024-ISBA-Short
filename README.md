@@ -20,17 +20,17 @@ the `devtools` package.
 To install the necessary dependencies from CRAN, you should pick a
 reliable local mirror.  Here, I'm using a popular US choice.
 
-R> options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN")) \
-R> install.packages("Rcpp", dependencies=TRUE) \
-R> install.packages("remotes", dependencies=TRUE) \
-R> install.packages("devtools", dependencies=TRUE) 
+`R> options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN"))` \
+`R> install.packages("Rcpp", dependencies=TRUE)` \
+`R> install.packages("remotes", dependencies=TRUE)` \
+`R> install.packages("devtools", dependencies=TRUE)` 
 
 For Rob's presentation, you will want the following.
 - `mBART`, the development version of the Monotonic BART package available at
 https://github.com/remcc/mBART_shlib
 For example, you can install it like so.
 
-R> library(remotes); install_github("remcc/mBART_shlib/mBART")
+`R> library(remotes); install_github("remcc/mBART_shlib/mBART")`
 
 For Tony's presentations, you will need the following.
 
@@ -41,7 +41,7 @@ For Tony's presentations, you will need the following.
 - `bcf`, the Bayesian Causal Forests package that has been archived by CRAN at https://cran.r-project.org/src/contrib/Archive/bcf
 You can install it like so.
 
-R> library(remotes); install_url("https://cran.r-project.org/src/contrib/Archive/bcf/bcf_1.3.1.tar.gz")
+`R> library(remotes); install_url("https://cran.r-project.org/src/contrib/Archive/bcf/bcf_1.3.1.tar.gz")`
 
 For Rodney's presentations, you will need the following.
 - `BART3`, the development version of the BART package available at
@@ -51,7 +51,7 @@ package available in the same place.
 
 For example, you can install BART3 like so.
 
-R> library(remotes); install_github("rsparapa/bnptools/BART3")
+`R> library(remotes); install_github("rsparapa/bnptools/BART3")`
 
 # Replication Materials
 
