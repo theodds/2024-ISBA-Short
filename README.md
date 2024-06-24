@@ -13,8 +13,9 @@ https://github.com/theodds/2024-ISBA-Short/blob/master/Sessions/install.pdf
 Below you will find a brief overview of installation instructions.  But, if you 
 encounter any problems, please consult the documentation and notes above.
 
-Most of the R packages needed can be installed from CRAN. There are a few
-of exceptions that need to be installed using the `devtools` package.
+Most of the R packages needed can be installed from CRAN. There are 
+exceptions that need to be installed using either the `remotes` or
+the `devtools` package.
 To install the necessary dependencies from CRAN, you should pick a
 reliable local mirror.  Here, I'm using a popular US choice.
 
