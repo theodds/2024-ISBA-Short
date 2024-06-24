@@ -11,7 +11,7 @@ local mirror.  Here, I'm using a midwestern choice.
 R> options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN")) \
 R> install.packages("Rcpp", dependencies=TRUE) \
 R> install.packages("remotes", dependencies=TRUE) \
-R> install.packages("devtools", dependencies=TRUE) \
+R> install.packages("devtools", dependencies=TRUE) 
 
 For Rob's presentation, you will want the following.
 - `mBART`, the development version of the Monotonic BART package available at
