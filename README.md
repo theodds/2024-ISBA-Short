@@ -15,8 +15,8 @@ encounter any problems, please consult the documentation and notes above.
 
 Most of the R packages needed can be installed from CRAN. There are a few
 of exceptions that need to be installed using the `devtools` package.
-To install the necessary dependencies from CRAN, you need to pick a
-local mirror.  Here, I'm using a popular US choice.
+To install the necessary dependencies from CRAN, you should pick a
+reliable local mirror.  Here, I'm using a popular US choice.
 
 R> options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN")) \
 R> install.packages("Rcpp", dependencies=TRUE) \
