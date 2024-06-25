@@ -3,7 +3,7 @@ This repository contains code for reproducing some of the examples from the
 
 # Required R Packages
 
-The canonical reference manuals for installing R packages can
+The canonical reference manual for installing R packages can
 be found on CRAN at 
 <https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Installing-packages>.
 
