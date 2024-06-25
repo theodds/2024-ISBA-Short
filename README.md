@@ -1,7 +1,7 @@
 This repository contains code for reproducing some of the examples from the
 2024 ISBA BART short course.
 
-# Required R Packages
+# BART R Packages
 
 The canonical reference manual for installing R packages can
 be found on CRAN at 
