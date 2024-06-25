@@ -14,7 +14,7 @@ along with other BART computing advice such as multi-threading.
 Below you will find a brief overview of installation instructions.  But, if you 
 encounter any problems, please consult the documentation and notes above.
 
-Most of the R packages needed can be installed from CRAN. There are 
+Many of the R packages needed can be installed from CRAN. There are 
 exceptions that need to be installed using either the `remotes` or
 the `devtools` package.
 To install the necessary dependencies from CRAN, you should pick a
