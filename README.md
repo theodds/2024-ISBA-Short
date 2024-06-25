@@ -15,11 +15,13 @@ along with other BART computing advice such as multi-threading.
 Below you will find a brief overview of installation instructions.  But, if you 
 encounter any problems, please consult the documentation and notes above.
 
-Many of the R packages needed can be installed from CRAN. There are 
-exceptions that need to be installed using either the `remotes` or
-the `devtools` package.
-To install the necessary dependencies from CRAN, you should pick a
-reliable local mirror.  Here, I'm using a popular US choice.
+Many of the R packages needed can be installed from CRAN. There are
+exceptions that need to be installed from other places.  Of course,
+there are many ways to install an R package.  Here, we provide some
+code snippets for installing packages from within an R session with
+the assistance of the `remotes` and `devtools` packages.  To install the
+necessary dependencies from CRAN, you should pick a reliable local
+mirror.  Here, I'm using a popular US choice.
 
 `R> options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN"))` \
 `R> install.packages("Rcpp", dependencies=TRUE)` \
