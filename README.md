@@ -27,8 +27,6 @@ mirror.  Here, I'm using a popular US choice.
 `R> install.packages("Rcpp", dependencies=TRUE)` \
 `R> install.packages("remotes", dependencies=TRUE)` 
 
-[comment `R> install.packages("devtools", dependencies=TRUE)`]:
-
 For Rob's presentation, you will want the following.
 - `mBART`, the development version of the Monotonic BART package available at
 <https://github.com/remcc/mBART_shlib>.
