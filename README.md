@@ -19,14 +19,15 @@ Many of the R packages needed can be installed from CRAN. There are
 exceptions that need to be installed from other places.  Of course,
 there are many ways to install an R package.  Here, we provide some
 code snippets for installing packages from within an R session with
-the assistance of the `remotes` and `devtools` packages.  To install the
+the assistance of the `remotes` package.  To install the
 necessary dependencies from CRAN, you should pick a reliable local
 mirror.  Here, I'm using a popular US choice.
 
 `R> options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN"))` \
 `R> install.packages("Rcpp", dependencies=TRUE)` \
-`R> install.packages("remotes", dependencies=TRUE)` \
-`R> install.packages("devtools", dependencies=TRUE)` 
+`R> install.packages("remotes", dependencies=TRUE)` 
+
+[`R> install.packages("devtools", dependencies=TRUE)`]
 
 For Rob's presentation, you will want the following.
 - `mBART`, the development version of the Monotonic BART package available at
@@ -37,10 +38,11 @@ For example, you can install it like so.
 
 For Tony's presentations, you will need the following.
 
-- `Batman`, which contains miscellaneous BART functions, available here:
-- `possum`, which performs posterior summarization, available here:
-- `BART4RS`, which has some functions for fitting the Cox proportional hazards
-   model, available here:
+- `Batman`, contains miscellaneous BART functions and it is available here:
+- `possum`, performs posterior summarization and it is available here:
+<https://github.com/spencerwoody/possum>.
+- `BART4RS`, some functions for fitting the Cox proportional hazards
+   model and it is available here:
 - `bcf`, the Bayesian Causal Forests package that has been archived by CRAN at <https://cran.r-project.org/src/contrib/Archive/bcf>.
 You can install it like so.
 
