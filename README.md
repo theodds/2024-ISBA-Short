@@ -1,5 +1,6 @@
-This repository contains code for reproducing some of the examples from the
-2024 ISBA BART short course.
+This repository contains code for reproducing some of the examples presented at the
+2024 ISBA World Meeting BART short course.  To run these examples, you will
+likely need to install BART software.
 
 # BART R Packages
 
