@@ -8,7 +8,7 @@ be found on CRAN at
 <https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Installing-packages>.
 
 For the packages needed in this course, we provide useful additional tips 
-in the `Sessions/` directory (<https://github.com/theodds/2024-ISBA-Short/blob/master/Sessions/install.pdf>)
+in the `Sessions/` directory (<https://github.com/theodds/2024-ISBA-Short/blob/master/Slides/computing.pdf>)
 along with other BART computing advice such as multi-threading.
 
 Below you will find a brief overview of installation instructions.  But, if you 
