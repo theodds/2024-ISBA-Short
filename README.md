@@ -24,8 +24,9 @@ necessary dependencies from CRAN, you should pick a reliable local
 mirror.  Here, I'm using a popular US choice.
 
 `R> options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN"))` \
+`R> install.packages("remotes", dependencies=TRUE)` \
 `R> install.packages("Rcpp", dependencies=TRUE)` \
-`R> install.packages("remotes", dependencies=TRUE)` 
+`R> install.packages("RcppArmadillo", dependencies=TRUE)` 
 
 For Rob's presentation, you will want the following.
 - `mBART`, the development version of the Monotonic BART package available at
@@ -36,7 +37,7 @@ For example, you can install it like so.
 
 For Tony's presentations, you will need the following.
 
-- `Batman`, contains miscellaneous BART functions and it is available here:
+- `Batman`, contains miscellaneous BART functions and it is available here.  See the file `batman.zip` (<https://github.com/theodds/2024-ISBA-Short/blob/master/batman.zip>).
 - `possum`, performs posterior summarization and it is available here:
 <https://github.com/spencerwoody/possum>.
 - `BART4RS`, some functions for fitting the Cox proportional hazards
