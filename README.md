@@ -1,6 +1,14 @@
-This repository contains code for reproducing some of the examples presented at the
-2024 ISBA World Meeting BART short course.  To run these examples, you will
-likely need to install BART software.
+
+# Late-breaking news
+
+See the recently updated details for the 2024 ISBA BioPharm Section 
+Best Paper Awards at the end of this README. 
+
+# Ensemble Learning with Bayesian Additive Regression Trees
+
+This repository contains code for reproducing some of the examples
+presented at the 2024 ISBA World Meeting BART short course.  To run
+these examples, you will likely need to install BART software.
 
 # BART R Packages
 
@@ -37,7 +45,7 @@ For example, you can install it like so.
 
 For Tony's presentations, you will need the following.
 
-- `Batman`, contains miscellaneous BART functions and it is available here: XXX
+- `Batman`, contains miscellaneous BART functions and it is available here: <https://github.com/theodds/Batman>
 - `possum`, performs posterior summarization and it is available here:
 <https://github.com/spencerwoody/possum>.
 - `BART4RS`, some functions for fitting the Cox proportional hazards
@@ -66,3 +74,19 @@ repository, simply do the following.
 2. Open the .Rproj file using **RStudio**.
 3. Open the notebooks in the `Examples/` directory.
 4. Knit the files if desired, or run the files interactively in **RStudio**.
+
+# 2024 ISBA BioPharm Section Best Paper Awards
+
+The ISBA BioPharm Section is now accepting submissions for the 2024
+Best Paper Award and the 2024 Junior Research Award. These awards
+recognize outstanding Bayesian statistical research conducted in the
+Biostatistics and Pharmaceutical fields.  Winners receive a cash prize
+and an invitation to present in the BioPharm webinar series.  The
+deadline for submission is July 21, 2024. For more details, please
+visit the BioParm Section online (see the URL below). Congratulations
+to our 2023 winners: Rodney Sparapani (Best Paper) and Noirrit Chandra
+(Junior Researcher)!
+
+Valerie Poynor, the 2024-2025 Section Chair, on behalf of the BioPharm officers
+
+https://isba-biostatspharma.github.io/#awards
