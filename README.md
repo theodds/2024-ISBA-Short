@@ -37,7 +37,12 @@ For example, you can install it like so.
 
 For Tony's presentations, you will need the following.
 
-- `Batman`, contains miscellaneous BART functions and it is available here.  See the file in this repo `batman.zip`.
+- `Batman`, contains miscellaneous BART functions and it is available
+  here.  See the file in this repo `batman.zip`. You can install it
+  like so.
+  
+`>R library(remotes); install_local("~/git/2024-ISBA-Short/batman.zip")`
+
 - `possum`, performs posterior summarization and it is available here:
 <https://github.com/spencerwoody/possum>.
 - `BART4RS`, some functions for fitting the Cox proportional hazards
