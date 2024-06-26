@@ -37,11 +37,11 @@ For example, you can install it like so.
 
 For Tony's presentations, you will need the following.
 
-- `Batman`, contains miscellaneous BART functions and it is available here.  See the file in this repo `batman.zip`.
+- `Batman`, contains miscellaneous BART functions and it is available here: XXX
 - `possum`, performs posterior summarization and it is available here:
 <https://github.com/spencerwoody/possum>.
 - `BART4RS`, some functions for fitting the Cox proportional hazards
-   model and it is available here:
+   model and it is available here: <https://github.com/theodds/BART4RS>.
 - `bcf`, the Bayesian Causal Forests package that has been archived by CRAN at <https://cran.r-project.org/src/contrib/Archive/bcf>.
 You can install it like so.
 
