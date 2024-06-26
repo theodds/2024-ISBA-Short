@@ -45,6 +45,9 @@ docs/
 # translation temp files
 po/*~
 
+# emacs backup files
+*~
+
 # RStudio Connect folder
 rsconnect/
 
