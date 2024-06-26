@@ -12,16 +12,24 @@ these examples, you will likely need to install BART software.
 
 # BART R Packages
 
-The canonical reference manual for installing R packages can
-be found on CRAN at 
+The canonical reference manual for installing R packages can be found on CRAN at
 <https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Installing-packages>.
+Note that you will need the usual R build tools installed as well, which you may
+already have installed.
 
-For the packages needed in this course, we provide useful additional tips 
-in `Slides/computing.pdf` 
-along with other BART computing advice such as multi-threading.
+- For Windows, see this link: <https://cran.r-project.org/bin/windows/Rtools/rtools44/rtools.html>.
+- For Mac, see this link: <https://cran.r-project.org/bin/macosx/tools/https://cran.r-project.org/> 
+  Our packages require clang and gfortran to be installed.
 
-Below you will find a brief overview of installation instructions.  But, if you 
-encounter any problems, please consult the documentation and notes above.
+For the packages needed in this course, we provide useful additional tips in
+`Slides/computing.pdf` along with other BART computing advice such as
+multi-threading.
+
+Below you will find a brief overview of installation instructions. But, if you
+encounter any problems, please consult the documentation and notes above. The
+file `install.R` walks through installation of the individual packages; if you
+run into problems installing after walking through the steps, it may be because
+you do not have Rtools or clang/gfortran installed.
 
 Many of the R packages needed can be installed from CRAN. There are
 exceptions that need to be installed from other places.  Of course,
