@@ -35,7 +35,7 @@ mirror.  Here, I'm using a popular US choice.
 options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN"))
 install.packages("remotes", dependencies=TRUE)`
 install.packages("Rcpp", dependencies=TRUE)
-install.packages("RcppArmadillo", dependencies=TRUE)`
+install.packages("RcppArmadillo", dependencies=TRUE)
 ```
 
 For Rob's presentation, you will want the following.
@@ -45,7 +45,7 @@ For example, you can install it like so.
 
 ```
 library(remotes)
-install_github("remcc/mBART_shlib/mBART")`
+install_github("remcc/mBART_shlib/mBART")
 ```
 
 For Tony's presentations, you will need the following.
@@ -60,7 +60,7 @@ You can install it like so.
 
 ```
 library(remotes)
-install_url("https://cran.r-project.org/src/contrib/Archive/bcf/bcf_1.3.1.tar.gz")`
+install_url("https://cran.r-project.org/src/contrib/Archive/bcf/bcf_1.3.1.tar.gz")
 ```
 
 For Rodney's presentations, you will need the following.
@@ -73,7 +73,7 @@ For example, you can install BART3 like so.
 
 ```
 library(remotes) 
-install_github("rsparapa/bnptools/BART3")`
+install_github("rsparapa/bnptools/BART3")
 ```
 
 # Replication Materials
