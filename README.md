@@ -41,7 +41,7 @@ For Tony's presentations, you will need the following.
   here.  See the file in this repo `batman.zip`. You can install it
   like so.
   
-`>R library(remotes); install_local("~/git/2024-ISBA-Short/batman.zip")`
+`>R library(remotes); install_local("YOUR-LOCAL-PATH-TO-REPO/2024-ISBA-Short/batman.zip")`
 
 - `possum`, performs posterior summarization and it is available here:
 <https://github.com/spencerwoody/possum>.
