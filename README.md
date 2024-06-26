@@ -31,34 +31,37 @@ the assistance of the `remotes` package.  To install the
 necessary dependencies from CRAN, you should pick a reliable local
 mirror.  Here, I'm using a popular US choice.
 
-`R> options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN"))` \
-`R> install.packages("remotes", dependencies=TRUE)` \
-`R> install.packages("Rcpp", dependencies=TRUE)` \
-`R> install.packages("RcppArmadillo", dependencies=TRUE)` 
+```
+options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN"))
+install.packages("remotes", dependencies=TRUE)
+install.packages("Rcpp", dependencies=TRUE)
+install.packages("RcppArmadillo", dependencies=TRUE)
+```
 
 For Rob's presentation, you will want the following.
 - `mBART`, the development version of the Monotonic BART package available at
 <https://github.com/remcc/mBART_shlib>.
 For example, you can install it like so.
 
-`R> library(remotes); install_github("remcc/mBART_shlib/mBART")`
+```
+library(remotes)
+install_github("remcc/mBART_shlib/mBART")
+```
 
 For Tony's presentations, you will need the following.
 
-- `Batman`, contains miscellaneous BART functions and it is available
-  here.  See the file in this repo `batman.zip`. You can install it
-  like so.
-  
-`>R library(remotes); install_local("YOUR-LOCAL-PATH-TO-REPO/2024-ISBA-Short/batman.zip")`
-
+- `Batman`, contains miscellaneous BART functions and it is available here: <https://github.com/theodds/Batman>
 - `possum`, performs posterior summarization and it is available here:
 <https://github.com/spencerwoody/possum>.
 - `BART4RS`, some functions for fitting the Cox proportional hazards
-   model and it is available here:
+   model and it is available here: <https://github.com/theodds/BART4RS>.
 - `bcf`, the Bayesian Causal Forests package that has been archived by CRAN at <https://cran.r-project.org/src/contrib/Archive/bcf>.
 You can install it like so.
 
-`R> library(remotes); install_url("https://cran.r-project.org/src/contrib/Archive/bcf/bcf_1.3.1.tar.gz")`
+```
+library(remotes)
+install_url("https://cran.r-project.org/src/contrib/Archive/bcf/bcf_1.3.1.tar.gz")
+```
 
 For Rodney's presentations, you will need the following.
 - `BART3`, the development version of the BART package available at
@@ -68,7 +71,10 @@ package available in the same place.
 
 For example, you can install BART3 like so.
 
-`R> library(remotes); install_github("rsparapa/bnptools/BART3")`
+```
+library(remotes) 
+install_github("rsparapa/bnptools/BART3")
+```
 
 # Replication Materials
 
