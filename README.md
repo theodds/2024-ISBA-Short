@@ -33,7 +33,7 @@ mirror.  Here, I'm using a popular US choice.
 
 ```
 options(repos=c(CRAN="http://lib.stat.cmu.edu/R/CRAN"))
-install.packages("remotes", dependencies=TRUE)`
+install.packages("remotes", dependencies=TRUE)
 install.packages("Rcpp", dependencies=TRUE)
 install.packages("RcppArmadillo", dependencies=TRUE)
 ```
