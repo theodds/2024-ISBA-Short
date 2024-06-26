@@ -9,7 +9,7 @@ be found on CRAN at
 <https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Installing-packages>.
 
 For the packages needed in this course, we provide useful additional tips 
-in the `Slides/` directory (<https://github.com/theodds/2024-ISBA-Short/blob/master/Slides/computing.pdf>)
+in `Slides/computing.pdf` 
 along with other BART computing advice such as multi-threading.
 
 Below you will find a brief overview of installation instructions.  But, if you 
@@ -37,7 +37,7 @@ For example, you can install it like so.
 
 For Tony's presentations, you will need the following.
 
-- `Batman`, contains miscellaneous BART functions and it is available here.  See the file `batman.zip` (<https://github.com/theodds/2024-ISBA-Short/blob/master/batman.zip>).
+- `Batman`, contains miscellaneous BART functions and it is available here.  See the file in this repo `batman.zip`.
 - `possum`, performs posterior summarization and it is available here:
 <https://github.com/spencerwoody/possum>.
 - `BART4RS`, some functions for fitting the Cox proportional hazards
