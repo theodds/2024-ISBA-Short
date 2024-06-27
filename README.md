@@ -18,8 +18,8 @@ Note that you will need the usual R build tools installed as well, which you may
 already have installed.
 
 - For Windows, see this link: <https://cran.r-project.org/bin/windows/Rtools/rtools44/rtools.html>.
-- For Mac, see this link: <https://cran.r-project.org/bin/macosx/tools/https://cran.r-project.org/> 
-  Our packages require clang and gfortran to be installed.
+- For macOS, see this link: <https://mac.r-project.org/tools/>.
+  Our packages require Clang and gfortran to be installed.
 
 For the packages needed in this course, we provide useful additional tips in
 `Slides/computing.pdf` along with other BART computing advice such as
