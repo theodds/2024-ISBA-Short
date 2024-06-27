@@ -29,7 +29,7 @@ Below you will find a brief overview of installation instructions. But, if you
 encounter any problems, please consult the documentation and notes above. The
 file `install.R` walks through installation of the individual packages; if you
 run into problems installing after walking through the steps, it may be because
-you do not have Rtools or clang/gfortran installed.
+you do not have Rtools or Clang/gfortran installed.
 
 Many of the R packages needed can be installed from CRAN. There are
 exceptions that need to be installed from other places.  Of course,
