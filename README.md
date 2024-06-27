@@ -18,8 +18,9 @@ Note that you will need the usual R build tools installed as well, which you may
 already have installed.
 
 - For Windows, see this link: <https://cran.r-project.org/bin/windows/Rtools/rtools44/rtools.html>.
-- For macOS, see this link: <https://mac.r-project.org/tools/>.
-  Our packages require Clang and gfortran to be installed.
+- For macOS, you will need Xcode that you can get from the App Store.
+And you will need GNU Fortran that you can find here:
+<https://mac.r-project.org/tools/>.
 
 For the packages needed in this course, we provide useful additional tips in
 `Slides/computing.pdf` along with other BART computing advice such as
@@ -29,7 +30,7 @@ Below you will find a brief overview of installation instructions. But, if you
 encounter any problems, please consult the documentation and notes above. The
 file `install.R` walks through installation of the individual packages; if you
 run into problems installing after walking through the steps, it may be because
-you do not have Rtools or Clang/gfortran installed.
+you do not have Rtools or Xcode/gfortran installed.
 
 Many of the R packages needed can be installed from CRAN. There are
 exceptions that need to be installed from other places.  Of course,
@@ -58,7 +59,7 @@ install_github("remcc/mBART_shlib/mBART")
 
 For Tony's presentations, you will need the following.
 
-- `Batman`, contains miscellaneous BART functions and it is available here: <https://github.com/theodds/Batman>
+- `Batman`, contains miscellaneous BART functions and it is available here: <https://github.com/theodds/Batman>.
 - `possum`, performs posterior summarization and it is available here:
 <https://github.com/spencerwoody/possum>.
 - `BART4RS`, some functions for fitting the Cox proportional hazards
@@ -102,10 +103,11 @@ recognize outstanding Bayesian statistical research conducted in the
 Biostatistics and Pharmaceutical fields.  Winners receive a cash prize
 and an invitation to present in the BioPharm webinar series.  The
 deadline for submission is July 21, 2024. For more details, please
-visit the BioParm Section online (see the URL below). Congratulations
-to our 2023 winners: Rodney Sparapani (Best Paper) and Noirrit Chandra
+visit the BioParm Section online
+(<https://isba-biostatspharma.github.io/#awards>). Congratulations to
+our 2023 winners: Rodney Sparapani (Best Paper) and Noirrit Chandra
 (Junior Researcher)!
 
 Valerie Poynor, the 2024-2025 Section Chair, on behalf of the BioPharm officers
 
-https://isba-biostatspharma.github.io/#awards
+
