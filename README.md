@@ -4,7 +4,7 @@
 See the recently updated details for the 2024 ISBA BioPharm Section 
 Best Paper Awards at the end of this README. 
 
-# Ensemble Learning with Bayesian Additive Regression Trees
+# Room 6A: Ensemble Learning with Bayesian Additive Regression Trees
 
 This repository contains code for reproducing some of the examples
 presented at the 2024 ISBA World Meeting BART short course.  To run
