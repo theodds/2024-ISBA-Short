@@ -2,3 +2,7 @@ growth0			Growth chart example for convergence diagnostics
 growth1			Growth chart example for FPD
 growth2			Growth chart example for FPD vs. FPDK
 growth3			Growth chart example for FPD vs. SHAP
+nci-topo   DART example with the NCItopo data
+nci-tsvs   TSVS example with the NCItopo data
+nox		   Boston air pollution: Nitrogen Oxides and Housing Values
+nox2		   Boston air pollution: informative prior for BART
