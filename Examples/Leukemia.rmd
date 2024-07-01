@@ -1,12 +1,16 @@
 ---
 title: "Survival Models and The Leukemia Dataset"
 bibliography: references.bib
+editor_options: 
+  markdown: 
+    wrap: 80
 ---
 
 # Dataset
 
-In this document, we illustrate the use of the proportional hazards model applied with BART to survival analysis. The
-dataset we are interested is described in the `spBayesSurv` package as follows:
+In this document, we illustrate the use of the proportional hazards model
+applied with BART to survival analysis. The dataset we are interested is
+described in the `spBayesSurv` package as follows:
 
 > A dataset on the survival of acute myeloid leukemia in 1,043 patients, first
 > analyzed by Henderson et al. (2002). It is of interest to investigate possible
@@ -46,20 +50,21 @@ theme_set(theme_bw())
 SEED <- digest::digest2int("analyze leukemia")
 ```
 
-
 ```{r loaddata}
 data("LeukSurv")
 head(LeukSurv)
 ```
 
-We use a slightly modified version of this dataset, with the covariates of interest scaled:
+We use a slightly modified version of this dataset, with the covariates of
+interest scaled:
 
 ```{r otherleuk}
 data("leuk_data")
 head(leuk_data)
 ```
 
-We first set a seed so that our results can be replicated, then we use the `coxpe_bart` function in the `BART4RS` package to fit the model:
+We first set a seed so that our results can be replicated, then we use the
+`coxpe_bart` function in the `BART4RS` package to fit the model:
 
 ```{r fitmodel, cache=TRUE}
 set.seed(SEED + 1)
@@ -76,7 +81,11 @@ fitted_coxpe <-
 
 # Posterior Summarization
 
-Next, we use the `possum` package (with some additional, optional, code for improving the visualization) to compute the posterior projection of the fitted BART model for $r(x)$ onto an additive model. We also compute projections leaving one predictor out at a time to help assess which predictors are most relevant in forming prediction.
+Next, we use the `possum` package (with some additional, optional, code for
+improving the visualization) to compute the posterior projection of the fitted
+BART model for $r(x)$ onto an additive model. We also compute projections
+leaving one predictor out at a time to help assess which predictors are most
+relevant in forming prediction.
 
 ```{r possumfits, cache = TRUE}
 
@@ -124,7 +133,8 @@ possum_summary_nowbc <-
   )
 ```
 
-The following function is a modification of the `additive_summary_plot` function in `possum` that makes slightly prettier pictures.
+The following function is a modification of the `additive_summary_plot` function
+in `possum` that makes slightly prettier pictures.
 
 ```{r additivesummary}
 additive_summary_plot_2 <-  function (additive_summary,
@@ -157,22 +167,30 @@ additive_summary_plot_2 <-  function (additive_summary,
 }
 ```
 
-We note print the summary. We do not visualize the posterior effect of `sex` in this case because it turns out not to be very relevant, as we will see when we look at the summary $R^2$'s for the models:
+We note print the summary. We do not visualize the posterior effect of `sex` in
+this case because it turns out not to be very relevant, as we will see when we
+look at the summary $R^2$'s for the models:
 
 ```{r add_sum, fig.align='center', dev='tikz', fig.height=3}
 add_sum <- additive_summary_plot_2(possum_summary) + xlab("") + theme_bw()
 plot(add_sum)
 ```
 
-Each of the three predictors examined here (age, white blood cell count, and Townsend index) have an increasing relationship with $r(x)$.
+Each of the three predictors examined here (age, white blood cell count, and
+Townsend index) have an increasing relationship with $r(x)$.
 
-Next, we compare the summary $R^2$ for each of the summary models; recall from @woody2020 that this is given by the quantity
+Next, we compare the summary $R^2$ for each of the summary models; recall from
+@woody2020 that this is given by the quantity
 
 $$
   R^2 = \frac{\sum_i \{r(X_i) - \widetilde r(X_i)\}}{\sum_I \{r(X_i) - \bar r\}^2}
 $$
 
-where $\widetilde r = \arg \min_{q \in \mathcal Q} \|r - q\|$ and $\bar r = \frac{1}{N} \sum_i r(X_i)$. This quantity represents the proportion of the variability in $r(x)$ that can be explained by the projection onto the simpler summary model $\mathcal Q$. Doing this, we obtain the following posterior distributions for the summary $R^2$:
+where $\widetilde r = \arg \min_{q \in \mathcal Q} \|r - q\|$ and
+$\bar r = \frac{1}{N} \sum_i r(X_i)$. This quantity represents the proportion of
+the variability in $r(x)$ that can be explained by the projection onto the
+simpler summary model $\mathcal Q$. Doing this, we obtain the following
+posterior distributions for the summary $R^2$:
 
 ```{r rsqplt, fig.align='center', dev='tikz'}
 rsq_df <- data.frame(Rsq = c(possum_summary$summaryRsq,
@@ -198,7 +216,9 @@ plot(p_rsq)
 
 ```
 
-Lastly, we'll plot the baseline hazard function over time; we see that it is decreasing over time, with individuals having a very high risk near baseline and much lower risk if they survive sufficiently long.
+Lastly, we'll plot the baseline hazard function over time; we see that it is
+decreasing over time, with individuals having a very high risk near baseline and
+much lower risk if they survive sufficiently long.
 
 ```{r hazplot, dev="tikz", fig.height=3, fig.width=7}
 g <- c(lag(fitted_coxpe$time_grid)[-c(1:2)], 20)
