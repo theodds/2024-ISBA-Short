@@ -14,8 +14,7 @@ these examples, you will likely need to install BART software.
 
 The canonical reference manual for installing R packages can be found on CRAN at
 <https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Installing-packages>.
-Note that you will need the usual R build tools installed as well, which you may
-already have installed.
+Note that you will need the usual R build tools installed as well.
 
 - For Windows, see this link: <https://cran.r-project.org/bin/windows/Rtools/rtools44/rtools.html>.
 - For macOS, you will need Xcode that you can get from the App Store.
